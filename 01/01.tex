@@ -29,12 +29,13 @@
 \newcommand{\Image}{\operatorname{Im}} %像
 
 
-\title{UEC代数勉強会}
+\title{UEC代数勉強会01回目}
 \author{bokuroro}
 \date{\today}
 \begin{document}
 \maketitle
 \begin{frame}{群の定義}
+  \begin{block}{群の定義}
   \begin{enumerate}
    \item 結合法則　$\forall a,b,c \in G$に対し、$(a\circ b)\circ c=a\circ(b\circ c)$
    \item 単位元の存在 $\exists e \in G$　 s.t.  $\forall a \in G$に対し、$a\circ e=e\circ a=a$\\
@@ -42,6 +43,7 @@
    \item 逆元の存在 $\forall a \in G$に対し、$\exists b \in G$　　s.t.  $a\circ b = b\circ a=e$\\
    このような$b$を$a$の\alert{逆元}と呼び、$a^{-1}$で表す.
   \end{enumerate}
+\end{block}
   \alert{二項演算}が定義されていることが前提となっている.\\
   また、交換則$a\circ b=b\circ a$が成り立つものを\alert{可換群}または\alert{Abel群}と呼ぶ.
 \end{frame}
@@ -106,6 +108,54 @@
   \begin{exampleblock}{行列環}
     $n$次正方行列の全体が行列の和と積を演算として成り立つ環、行列環$M(n,\mathbb{R})$がある. 加法の単位元はゼロ行列$O$、乗法の単位元は単位行列$E$である.\\
     成分を任意の環としても、再び環となる.
+  \end{exampleblock}
+\end{frame}
+
+\begin{frame}{零因子}
+  \begin{block}{零因子}
+    零元と異なる２つの元$x,y$で掛けたもの$xy=0$となってしまうものを\alert{零因子}と呼ぶ. 例えば、二次正方行列の環では
+    \begin{equation}
+      \begin{pmatrix}
+        1 & 0 \\
+        0 & 0 \\
+      \end{pmatrix}
+      \begin{pmatrix}
+        0 & 0 \\
+        1 & 0 \\
+      \end{pmatrix}
+      =
+      \begin{pmatrix}
+        0 & 0 \\
+        0 & 0 \\
+      \end{pmatrix}
+    \end{equation}
+    となり、零因子がたくさん存在する.
+  \end{block}
+\end{frame}
+
+\begin{frame}{体の定義}
+  \alert{体}は環の特別なもので、単位可換環$(K,+,\cdot)$において、零元を除いたもの$K^\times := K\backslash \{0\}$が乗法に関して群をなすものを言う. \\
+  性質を改めて書けば
+  \begin{block}{体の定義}
+    \begin{enumerate}
+      \item $(K,+)$は可換群をなす.
+      \item $(K^\times,\cdot)$は可換群をなす.
+      \item $+$と$\cdot$は分配法則で関連する. \\
+      $\forall a,b,c \in K$に対し、$a(b+c)=ab + ac,    (a+b)c=ac+bc$
+    \end{enumerate}
+  \end{block}
+\end{frame}
+
+\begin{frame}{有限体}
+  \begin{block}{無限体　有限体}
+    体に含まれる元の個数が有限個であるものを\alert{有限群}、多くの元を含む体を\alert{無限体}と言う. \\
+    無限体の例としては、有理数体$\mathbb{Q}$、実数体$\mathbb{R}$、複素数体$\mathbb{C}$、実係数の有理関数体$\mathbb{R}(x)$、複素係数の有理関数体$\mathbb{C}(x)$が存在する.
+  \end{block}
+  また、有限体の例としては次である.
+  \begin{exampleblock}{有限体$F_p$}
+    $p$は素数である.\\
+    集合としては、$Z_p$と同じもので、$p$で割ったあまりを並べてある.\\
+    $p$が素数の時、$0$以外の元に乗法の逆元が存在することを次ページで証明しておく.
   \end{exampleblock}
 \end{frame}
 \end{document}
