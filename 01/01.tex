@@ -31,7 +31,7 @@
 
 \title{UEC代数勉強会01回目}
 \author{bokuroro}
-\date{\today}
+\date{December 26, 2020}
 \begin{document}
 \maketitle
 \begin{frame}{群の定義}
@@ -131,8 +131,8 @@
     \end{equation}
     となり、零因子がたくさん存在する.
   \end{block}
+  零因子を持つとややこしいので、零因子を持たない環を\alert{整域}と呼び、重宝される.
 \end{frame}
-
 \begin{frame}{体の定義}
   \alert{体}は環の特別なもので、単位可換環$(K,+,\cdot)$において、零元を除いたもの$K^\times := K\backslash \{0\}$が乗法に関して群をなすものを言う. \\
   性質を改めて書けば
@@ -156,6 +156,67 @@
     $p$は素数である.\\
     集合としては、$Z_p$と同じもので、$p$で割ったあまりを並べてある.\\
     $p$が素数の時、$0$以外の元に乗法の逆元が存在することを次ページで証明しておく.
+  \end{exampleblock}
+\end{frame}
+
+\begin{frame}{証明}
+  ここでは、下を用いて証明を行います. 直感的には鳩で置き換えた方がわかりやすいですが、適用するときは、こちらの表現を使った方が良いと思います。
+  \begin{alertblock}{鳩の巣原理}
+    元の個数が等しい二つの有限集合の間に写像があるとき
+    \begin{enumerate}
+      \item 全射なら単射
+      \item 単射なら全射
+    \end{enumerate}
+  \end{alertblock}
+  $1 \le \forall x \le p-1$に対して、乗法の逆元が存在することを証明する.\\
+  まず、$p$が素数より、$x$による乗法は$F_p^\times = {1,2,\ldots,p-1}$から、一対一写像を引き起こす.(つまり単射)\\
+  なぜなら、$a,b\in {1,2,\ldots,p-1}$について$xa=xb$が言えるとき、$p|x(a-b)$で、$|a-b|<p$より、$a=b$が言えるからである.\\
+
+  よって、鳩の巣原理より、この写像は全射であり、$xy=1$となるような$y$が存在する.
+\end{frame}
+\begin{frame}{補足}
+  有限体$F_p$と、有理数体$\mathbb{Q}$は、これ以上小さな部分体が取れない\alert{素体}(1.6で詳しくやる)というものです.\\
+  全ての素体は$\mathbb{Q}$か$Z_p$と同型(全く同じ代数構造を持つこと)であることが言える.\\
+  参考: http://hooktail.sub.jp/algebra/PrimeFiled/
+\end{frame}
+
+\begin{frame}{公理を用いた推論}
+  全部書いてると冗長になってしまうので、どれも重要ですが,2つだけ書いておきます.
+  \begin{alertblock}{命題1.2環の公理の系}
+    $\forall a \in A$に対し、$a\cdot 0 = 0 \cdot a=0$、よって$0$は乗法の逆元を持ち得ない. また、零因子も乗法の逆元を持ち得ない.
+  \end{alertblock}
+  分配法則より、$a\cdot 0=a\cdot (0+0) =a\cdot 0+a\cdot 0$であり、両辺に$a\cdot 0$の加法の逆元$-a\cdot 0$を加えると、結合法則より
+  \begin{eqnarray*}
+    0 &=& a\cdot0+(-a\cdot0)=(a\cdot0+a\cdot0)+(-a\cdot0)=a\cdot0+(a\cdot0+(-a\cdot0))\\
+    &=& a\cdot0+0 = a\cdot0
+  \end{eqnarray*}
+  また、$0$に逆元$x$があるとすれば、$0=x\cdot 0=1$で矛盾. $x,y\neq0$で、$x\cdot y=0$とし、$x$に乗法の逆元$x^{-1}$があるとすると
+  \begin{equation*}
+    0 = x^{-1}\cdot 0 = x^{-1}\cdot(x\cdot y)=(x^{-1}\cdot x)\cdot y=1\cdot y = y
+  \end{equation*}
+  となって矛盾.
+\end{frame}
+\begin{frame}{公理を用いた推論}
+  \begin{alertblock}{命題1.5}
+    体には零因子は存在しない. また、これより体の元を係数とする一変数代数方程式$f(x):=a_n x^n+a_1x^{n-1}+\ldots+a_n=0$($a_0\neq0$)は次数$n$より多くの根を持たない.
+  \end{alertblock}
+  $xy=0$で$x\neq0$なら、体の公理により、$x^{-1}$が存在し、これを両辺にかけると
+  \begin{equation*}
+    0 = x^{-1}(xy) = (x^{-1}x)y=1\cdot y = y
+  \end{equation*}
+  となる. また、$f(\alpha)=0$とすると、因数定理
+  \begin{equation*}
+    f(x) = (x-\alpha)q(x)
+  \end{equation*}
+  という式が得られ、$q(x)$は$n-1$次だから、数学的帰納法により、主張が証明できる.
+\end{frame}
+\begin{frame}{演習問題}
+  では、いくつか演習問題を解いてみましょう.
+  \begin{exampleblock}{問1.12}
+    群$G$において、任意の元が$x^2 = e$を満たしていれば$G$は可換群であることを示せ。
+  \end{exampleblock}
+  \begin{exampleblock}{問1.13}
+    群$G$において、二つの元$x,y$が可換であるためには$(xy)^2=x^2y^2$が成立することが必要かつ十分であること証明せよ.
   \end{exampleblock}
 \end{frame}
 \end{document}
