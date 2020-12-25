@@ -1,0 +1,111 @@
+\documentclass[dvipdfmx,11pt,notheorems]{beamer}
+
+\usepackage{bxdpx-beamer}
+\usepackage{pxjahyper}
+\usepackage{minijs}%和文用
+\renewcommand{\kanjifamilydefault}{\gtdefault}%和文用
+
+
+\usetheme{Madrid}
+\usefonttheme{professionalfonts}
+\setbeamertemplate{frametitle}[default][center]
+\setbeamertemplate{navigation symbols}{}
+\setbeamercovered{transparent}%好みに応じてどうぞ）
+\setbeamertemplate{footline}[page number]
+\setbeamerfont{footline}{size=\normalsize,series=\bfseries}
+\setbeamercolor{footline}{fg=black,bg=black}
+%%%%
+
+\usepackage{amsmath,amssymb}
+\usepackage{bm}
+\usepackage{graphicx}
+\usepackage{ascmac}
+\usepackage{mathtools}
+
+\newcommand{\divergence}{\mathrm{div}\,}  %ダイバージェンス
+\newcommand{\grad}{\mathrm{grad}\,}  %グラディエント
+\newcommand{\rot}{\mathrm{rot}\,}  %ローテーション
+\newcommand{\Ker}{\operatorname{Ker}} %核
+\newcommand{\Image}{\operatorname{Im}} %像
+
+
+\title{UEC代数勉強会}
+\author{bokuroro}
+\date{\today}
+\begin{document}
+\maketitle
+\begin{frame}{群の定義}
+  \begin{enumerate}
+   \item 結合法則　$\forall a,b,c \in G$に対し、$(a\circ b)\circ c=a\circ(b\circ c)$
+   \item 単位元の存在 $\exists e \in G$　 s.t.  $\forall a \in G$に対し、$a\circ e=e\circ a=a$\\
+   このような$e$を\alert{単位元}と呼ぶ.
+   \item 逆元の存在 $\forall a \in G$に対し、$\exists b \in G$　　s.t.  $a\circ b = b\circ a=e$\\
+   このような$b$を$a$の\alert{逆元}と呼び、$a^{-1}$で表す.
+  \end{enumerate}
+  \alert{二項演算}が定義されていることが前提となっている.\\
+  また、交換則$a\circ b=b\circ a$が成り立つものを\alert{可換群}または\alert{Abel群}と呼ぶ.
+\end{frame}
+\begin{frame}{群の例}
+  \begin{exampleblock}{変換群}
+    定義は参考書参照\\
+    写像$f,g,h \in G: X \rightarrow X$を考えたとき、$x \in X$として、
+    \begin{eqnarray*}
+      ((h\circ g)\circ f)(x) &=& (h\circ g)(f(x))\\
+      &=&(h\circ g)(f(x))\\
+      &=&h(g(f(x)))\\
+      &=& h((g\circ f)(x))\\
+      &=& (h\circ (g\circ f))(x)
+    \end{eqnarray*}
+    よって結合則成立. \\
+    まぁこんなの考えなくてもほぼ自明ですが. \\
+    恒等写像$\mathrm{id}(x)=x$が存在すること、逆元が存在することは、写像が全単射より自明ですね.
+  \end{exampleblock}
+\end{frame}
+\begin{frame}{群の例}
+  \begin{exampleblock}{対称群}
+    要するに$n$個のものの置換の群である. \\
+    \begin{equation*}
+      \begin{pmatrix}
+        1 & 2 & 3 \\
+        2 & 1 & 3 \\
+      \end{pmatrix}
+    \end{equation*}
+    と書いたら、対称群$S_3$の元で$1\rightarrow 2,2\rightarrow1,3\rightarrow3$に置き換わることを表す. \\
+    \alert{巡回置換}、$(1,2,3)$と互換については参考書参照. 任意の置換は互いに素(交わらない)巡回置換に分解でき、いくつかの互換に分解できる. \\
+    積についてはこの先出てくるので演習問題にしておきます.
+  \end{exampleblock}
+\end{frame}
+\begin{frame}{いろいろ定義}
+  \begin{block}{定義1.2}
+    群の元の総数のことを群の\alert{位数}(order)と呼ぶ.
+    \begin{itemize}
+      \item 位数が有限　$\rightarrow$ \alert{有限群}
+      \item 位数が無限　$\rightarrow$ \alert{無限群}
+    \end{itemize}
+    また、
+    \begin{itemize}
+      \item 連続パラメータで依存する $\rightarrow$ \alert{連続群}
+      \item それ以外　$\rightarrow$ \alert{離散群}
+    \end{itemize}
+    と呼ぶ.
+  \end{block}
+\end{frame}
+
+\begin{frame}{環の定義}
+  \begin{block}{環の定義}
+    集合$A$に2つの二項演算$(+,\cdot)$が定義されていて、次の性質を持つ.
+    \begin{enumerate}
+      \item $(A,+)$は可換群をなす.
+      \item 乗法$\cdot$は結合法則$(a\cdot b)\cdot c=a\cdot(b\cdot c)$を満たす.
+      \item 2つの演算は\alert{分配法則}を満たす.\\
+      $\forall a,b,c \in A$に対し、$a\cdot(b+c)=a\cdot b + a\cdot c,    (a+b)\cdot c=a\cdot c+b\cdot c$
+    \end{enumerate}
+    勘違いしやすいが、必ずしも乗法の単位元を持つ必要はない. \\
+
+  \end{block}
+  \begin{exampleblock}{行列環}
+    $n$次正方行列の全体が行列の和と積を演算として成り立つ環、行列環$M(n,\mathbb{R})$がある. 加法の単位元はゼロ行列$O$、乗法の単位元は単位行列$E$である.\\
+    成分を任意の環としても、再び環となる.
+  \end{exampleblock}
+\end{frame}
+\end{document}

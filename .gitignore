@@ -4,3 +4,9 @@
 *.log
 *.aux
 *.fdb_latexmk
+*.snm
+*.toc
+*.nav
+*.gz
+*.out
+*.dvi
