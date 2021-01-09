@@ -10,3 +10,4 @@
 *.gz
 *.out
 *.dvi
+.DS_Store
