@@ -1,0 +1,618 @@
+@import: mysteamer
+@require: gr
+@require: code
+@import: matrix
+@import: lheaders/mystdjareport
+@import: listings
+
+let-math \prime = math-char MathOrd (string-unexplode [0x2032])
+
+let-math \varnothing = math-char MathBin `Ø`
+
+let-math \overline m = 
+    let ol = math-char MathOrd (string-unexplode [0x0305]) in
+    ${#m #ol}
+
+let font-size-modify ctx scale inner =
+    let ctx-size =
+      ctx |> set-font-size (get-font-size ctx *' scale)
+    in
+      read-inline ctx-size inner
+
+let-inline ctx \fntsize = font-size-modify ctx 0.8 
+
+let-inline ctx \br = inline-fil ++ embed-block-breakable ctx (block-skip (get-natural-width (read-inline ctx {m})))
+
+let-inline ctx \medium = font-size-modify ctx 2. 
+in
+
+let color1 = Color.rgb (30. /. 255.) (150. /. 255.) (253. /. 255.) in
+
+
+
+Steamer.document (|
+  title = {UEC 代数勉強会 第4回};
+  author = {9trap};
+  institute = {uec19 情報理工学域 Ⅱ類 P1};
+  date = {2021 3 8};
+  show-title = false;
+  show-toc = false;
+  color = color1;
+|) '<
+        +make-title(color1){UEC 代数勉強会 第4回}{9trap}{uec19 情報理工学域 Ⅱ類 P1}{}
+
+    +frame-nc (color1)?:({今日の構成})<
+        +listing (color1){
+            * 置換表現
+            * 剰余類
+            * 巡回群の位数
+            * ゲームの置換群
+            * 作用
+            * 対称性の例
+        }
+    >
+    +frame-nc (color1)?:({左移動})<
+        +definition?:({左移動\footnote{番号振りは、勉強会番号.章.順番 としている}})?:(4)?:(1){
+            群${G}とその元${g}について、
+            \br;    
+            \math (${
+                \lambda_g : G \rightarrow G, a \mapsto ga
+            });
+            で定義される写像${\lambda_g}を${G}の${g}による左移動という. 
+        }
+    >
+    +frame (color1)<
+        +p {
+            勿論右移動も存在して、左移動の${g^{-1}}を右からかける写像を指す.
+        }
+        +p {
+            左移動と右移動は双対の関係にあり、以下の左移動に関する議論は、すべて左を右に、${g^{-1}}を右からかけることで右移動にも適用できる(双対原理).
+        }
+        +p {
+            右移動の定義は、作用の定義にもよる. これは後述する.
+        }
+    >
+    +frame (color1)<
+        +lemma?*?*?*?*?:(`leftaction`){
+            群${G}と、その元${g}による左移動${\lambda_g}は、全単射である.
+        }
+        +proof{
+            ${G}の任意の元${a, b}について、${g}の逆元の存在から\br;
+            \math (${
+                ga = gb \Rightarrow a=b
+            });. よって、${\lambda_g}は単射.\br;
+            ${G}の任意の元${a}について、${g}の逆元の存在から\br;
+            \math (${
+                \exists x \in G \sqbracket{x = g^{-1}a}
+            });. そのような${x}について、${gx = a}.\br;
+            よって、${\lambda_g}は全射.\br;
+            以上より${\lambda_g}は単射であり全射であるから、全単射である.
+        }
+    >
+
+    +frame-nc (color1)?:({表現})<
+        +definition?:({表現}){
+            群${G}について、\br;${G}の元${g}を線型空間${V}上の線型変換${\app{T}{g}}に対応させる写像${T}であって、
+            ${\forall g, h \in G \sqbracket{
+                \app{T}{gh} = \app{T}{g}\app{T}{h}
+            }}であるものを${G}の表現という.
+        }
+    >
+
+    +frame (color1)<
+        +remark?:({線型空間と線型写像}){
+            思い出してください.
+        }
+    >
+
+    +frame-nc (color1)?:({置換表現})<
+        +definition?:({置換表現}){
+            群${G}が有限群であるとき、${G}は${\mathbb{Z}_n \paren{n \in \mathbb{N}}}と対等であり\footnote{実はこれ自体が集合が有限であることの定義となりうる.そうでない場合(無限でないとする)も定理として導くことができる.}、その対応${\phi : G \rightarrow \mathbb{Z}_n}と左移動${\lambda_g}について、${
+                G \rightarrow S_n,
+                g \mapsto 
+                \phi \circ \paren{
+                    \lambda_g \circ \phi^{-1}
+                }
+            }\footnote{置換を${\mathbb{Z}_n \rightarrow \mathbb{Z}_n}とした}で定義される写像${\lambda}を群${G}の左移動による置換表現という.
+        }
+    >
+
+    +frame (color1)<
+        +theorem?*?*?*?*?:(`leftaction-homomorphism`){
+            群${G}の左移動による置換表現${\lambda}は準同型である.
+        }
+        +proof{
+            ${G}の元${g, h}について、${\app{\lambda}{g}, \app{\lambda}{h} \in S_n}の合成は、\br;
+            ${
+                \phi \circ
+                \lambda_h \circ
+                \phi^{-1} \circ
+                \phi \circ
+                    \lambda_g \circ \phi^{-1}
+            }.
+            写像の合成では結合則が成り立つので、これは
+            ${
+                \phi \circ
+                    \paren{\lambda_h \circ \lambda_g} \circ \phi^{-1}
+            }である.\br;
+            ここで、${\forall a \in G \sqbracket{
+                \app{\paren{\lambda_h \circ \lambda_g}}{a} = gha = \app{\lambda_{gh}}{a}
+            }}より、
+            ${\app{\lambda}{gh}=\app{\lambda}{g}\app{\lambda}{h}}. よって${\lambda}は準同型.
+        }
+    >
+
+    +frame-nc (color1)?:({忠実})<
+        +definition?:({忠実}){
+            群${G}の表現${\tau}が単射であるとき、表現${\tau}は忠実であるという.
+        }
+    >
+
+    +frame-nc (color1)<
+        +theorem{
+            群${G}の左移動による置換表現${\lambda}は忠実である.
+        }
+        +proof{
+            ${G}の単位元${e}は${g, h \in G}によって${g, h}へ移されるため、${g \neq h}のとき少なくともこの部分で誘導される置換が異なる.\br;
+            よって、左移動による置換表現${\lambda}は単射である.
+        }
+    >
+    +frame-nc (color1)<
+        +p {
+            もちろん置換表現も表現であり、たとえば${\paren{1,2} \in S_3}に対応するのは
+            ${
+                \matrix![
+                    [${0}; ${1}; ${0};];
+                    [${1}; ${0}; ${0};];
+                    [${0}; ${0}; ${1};];
+                ] \in \app{GL}{3, \mathbb{R}}
+            }である.
+        }
+    >
+
+    +frame (color1)<
+        +problem?:({参考書 問2.2}){
+            ${S_3}の左移動による置換表現を求めよ.
+        }
+    >
+
+    +frame (color1)?:({線型表現})<
+        +p{
+            対称群の線型表現は${\sigma \in S_n}から
+        }
+        +math(${
+            T_{\sigma} : \paren{\bm{e}_1 \ldots \bm{e}_n} \mapsto
+            \paren{\bm{e}_{\app{\sigma}{1}} \ldots \bm{e}_{\app{\sigma}{n}}}
+        });
+        +p{
+            で定義される${T_{\sigma} \in \app{GL}{n, \mathbb{R}}}への対応によって定まる.
+        }
+        +p{
+            明らかに${\bm{u} \cdot \bm{v} = 
+            \app{T_{\sigma}}{\bm{u}} \cdot \app{T_{\sigma}}{\bm{v}}
+            }である(計量、つまり内積が保存される)から、${T_{\sigma}}は直交行列である.
+        }
+    >
+
+    +frame (color1)?:({剰余類への準備})<
+        +definition?*?*?:(2)?:(0){
+            群${G}の元${g}と部分群${A}について、\br;
+            ${\setsep{ga}{a\in A}}を${gA}とかく.\br;
+            同様に、${\setsep{ag}{a\in A}}を${Ag}とかく.
+        }
+        +p {
+          
+        }
+        +p {
+            単なる記法(notation)のはなし.
+        }
+    >
+
+    +frame-nc(color1)?:({左移動の性質})<
+        +lemma?:({参考書 補題2.5}){
+            群${G}の部分群${A}について、\br;
+            ${\forall g_1, g_2 \in G \sqbracket{
+                g_1\paren{g_2 A} = \paren{g_1 g_2}A
+            }}\br;
+            また、${G}の部分群${A, B}について、\br;
+            ${\forall g \in G \sqbracket{
+                A=B \Leftrightarrow
+                gA=gB \Leftrightarrow
+                Ag=Bg
+            }}.
+            さらに、${G}の部分群${A}が有限群のとき、\br;
+            ${\forall g \in G \sqbracket{
+                \abs{A} = 
+                \abs{gA} = 
+                \abs{Ag}
+            }}.
+        }
+        +proof{
+            補題\ref(`lemma:leftaction`);と定理\ref(`theorem:leftaction-homomorphism`);からわかる.
+        }
+    >
+
+    +frame(color1)<
+        +lemma?:({参考書 補題2.6})?*?*?*?:(`leftcoset-traits`){
+            群${G}の元${g}と部分群${H}について、\br;
+            ${g \in H \Leftrightarrow gH = H},\br;
+            ${g \nin H \Leftrightarrow gH \cap H = \varnothing},\br;
+            ${\forall g_1, g_2 \in G \sqbracket{
+                g_1 H = g_2 H \lor
+                g_1 H \cap g_2 H = \varnothing
+            }}
+        }
+        +proof {
+            参考書参照.
+        }
+    >
+
+    +frame(color1)<
+        +lemma?*?*?*?*?:(`leftcoset-cond`){
+            群${G}とその部分群${H}について、\br;
+            ${\forall g, h \in G \sqbracket{
+                gH = hH \Leftrightarrow
+                g^{-1}h \in H
+            }}
+        }
+        +proof{
+            ${
+                gH = hH \Leftrightarrow 
+                g^{-1}hH = H
+            }だから補題\ref(`lemma:leftcoset-traits`);より直ちに従う.
+        }
+    >
+
+    +frame(color1)?:({左移動による同値関係})<
+        +p {}
+        +theorem?:({左移動による同値関係}){
+            群${G}とその部分群${H}について、
+            ${\forall g, h \in G \sqbracket{
+                g \sim h \Leftrightarrow g^{-1}h \in H
+            }}.\br;
+            で定められる関係は同値関係である.
+        }
+        +proof{
+            ${\forall g \in G \sqbracket{ g^{-1}g = e }}であり、単位元${e}はどの部分群にも含まれるため、${g \sim g}となりこの関係は反射律を満たす. \br;
+            また、部分群は逆元も含むため、${g \sim h}すなわち${g^{-1}h \in H}ならば、${\paren{g^{-1}h}^{-1} = h^{-1}g \in H}すなわち${h \sim g}. よって、対称律が満たされる.
+            \br;
+            \br;
+            \br;
+            \br;
+            \br;
+            \br;
+            \br;
+            \br;
+            \br;
+            さらに、${f, g, h \in H}について、${f \sim g}かつ${g \sim h}ならば、\br;
+            ${f^{-1}g \in H}かつ${g^{-1}h \in H}. 部分群は演算について閉じているため、
+            ${f^{-1}h = f^{-1}gg^{-1}h \in H}すなわち${f \sim h}. よって、推移律が満たされた.
+        }
+    >
+    +frame(color1)?:({同値類})<
+        +definition?:({同値類}){
+            関係${\sim}が集合${S}の同値関係であり${a \in S}とき、
+            ${\setsep{x \in S}{x \sim a}}を${a}の${\sim}の同値類といい、誤解を招かない限り${\paren{a}}とかく.
+        }
+        +p {}
+        +p {
+            補題\ref(`lemma:leftcoset-cond`);からわかるように、群${G}の任意の元${g}について、${gH}は同値類を与える.
+        }
+    >
+
+    +frame(color1)<
+        +lemma?*?*?*?*?:(`equivalence1`){
+            ${\forall a \in S \sqbracket{a \in \paren{a}}}
+        }
+        +proof{
+            同値関係の反射律から${a \sim a}.よって、${a \in \paren{a}}.
+        }
+        +lemma?*?*?*?*?:(`equivalence2`){
+            ${\forall a, b \in S \sqbracket{
+                \paren{a} \cap \paren{b} \neq \varnothing \Rightarrow 
+                \paren{a} = \paren{b}
+            }}
+        }
+        +proof{
+            ${\paren{a} \cap \paren{b} \neq \varnothing}を仮定すると、
+            ${\exists c \in S \sqbracket{ c \in \paren{a} \land c \in \paren{b} }}.
+            そのような${c}について、${c \sim a \land c \sim b}.
+            よって、${x \in \paren{a}}ならば、${x \sim a}でありかつ${c \sim a \land c \sim b}だから同値関係の推移律から${x \sim b}、つまり${x \in \paren{b}}.\br;
+            逆もしかり.よって、${\paren{a} = \paren{b}}.
+        }
+    >
+
+    +frame(color1)?:({分割})<
+        +definition?:({分割})?*?*?*?:(`partition`){
+            集合${P}が集合${S}の分割であるとは、\br;
+            ${\bigcup P = S \land 
+            \forall u, v \in S \sqbracket{
+                u \cap v \neq \varnothing \rightarrow u=v
+            }}を満たすことをいう.
+        }
+    >
+
+    +frame(color1)?:({分割})<
+        +theorem?:({同値関係が導く分割})?*?*?*?:(`equivalence-partition`){
+            関係${\sim}が集合${S}の同値関係であるとき、${\setsep{\paren{a}}{a \in S}}は${S}の分割を与える.
+        }
+        +proof{
+            ${a\in S}について、補題\ref(`lemma:equivalence1`);より${a \in \paren{a}}.\br;
+            よって、${\exists x \in \setsep{\paren{a}}{a \in S} \sqbracket{
+                a \in x
+            }}.\br;
+            よって、${\bigcup\setsep{\paren{a}}{a \in S} = S}.\br;
+            また、補題\ref(`lemma:equivalence2`);より、そのまま2個目の要請が満たされる.
+        }
+    >
+
+    +frame(color1)?:({剰余類})<
+        +definition?:({剰余類}){
+            群${G}とその元${g}、部分群${H}について、${gH}を${g}を代表元とする左剰余類という.
+        }
+        +p {
+            定義\ref(`definition:partition`);と
+            定理\ref(`theorem:equivalence-partition`);をみると、
+            ${\setsep{gH}{g\in G}}
+            が${G}の分割となっていることがわかる.
+        }
+        +definition{
+            ${\abs{\setsep{gH}{g\in G}}}を${\sqbracket{G : H}}とかく.
+        }
+    >
+
+    +frame(color1)?:({Lagrange の定理})<
+        +theorem?:({Lagrange の定理})?*?*?*?:(`lagrange`){
+            有限群${G}の部分群${H}の位数は${G}の位数の約数である.
+        }
+        +proof{
+            補題\ref(`lemma:leftaction`);から、すべての剰余類の要素の個数は同じ.
+            よって、${\abs{G} = \abs{H} \sqbracket{G:H}}となる.
+        }
+    >
+
+    +frame(color1)<
+        +problem?:({参考書 問2.3}){
+            ${g \sim h \Leftrightarrow h^{-1}g\in H}で定められた関係が同値関係であることを示せ.
+        }
+    >
+
+    +frame(color1)?:({元の位数})<
+        +definition?:({元の位数})?*?:(3)?:(0){
+            群${G}の元${g}について、${g^m=e}となる最小正の整数${m}が存在するとき、${m}を元${g}の位数という.そのような正の整数が存在しないとき、元${g}の位数は無限大であるという.
+        }
+        +corollary{
+            有限群の元の位数は群の位数の約数である.
+        }
+        +proof{
+            定理\ref(`theorem:lagrange`);(lagrange)から明らか.
+        }
+    >
+
+    +frame(color1)?:({})<
+        +problem?:({参考書 問2.4}){
+            ${S_3}の各元の位数を求めよ.
+        }
+        +problem?:({参考書 問2.5}){
+            群${G}の元${x}の位数が${12}のとき、${x^k  \paren{1 \leq k \leq 12}}の位数を求めよ.
+        }
+    >
+
+    +frame(color1)<
+        +problem?:({参考書 問2.6}){
+            ${S_4}において、\br;${a=
+                \matrix![
+                    [${1}; ${2}; ${3}; ${4}];
+                    [${2}; ${4}; ${1}; ${3}];
+                ]
+            }とする.\br;
+                1. ${a}の位数を求めよ.\br;
+                2. ${x^m=a}となるような${x}と${m}は${x=a}と${m=1}以外に存在するか?
+
+        }
+        +problem?:({参考書 問2.7}){
+            ${S_3}の元${a=\paren{1,2,3}}と
+            ${b=\paren{1,2}}を生成元として取ったときの基本関係式を示せ.
+            また、${S_4, A_4}の生成元と基本関係式をそれぞれ${1}組あたえよ.
+        }
+
+    >
+
+    +frame(color1)<
+        +proposition?:({巡回群の判定}){
+            有限群${G}の位数と等しい位数を持つ元が${G}に存在すれば、${G}はその元を生成元とする巡回群となる.
+        }
+        +proof{
+            参考書参照.
+        }
+    >
+
+    +frame(color1)<
+        +corollary?:({参考書 系2.10}){
+            位数が素数${p}の群${G}は巡回群であり、単位元以外の元が生成元である.
+        }
+        +proof{
+            参考書参照.
+        }
+    >
+
+    +frame(color1)<
+        +corollary?:({参考書 系2.11}){
+            位数が素数${p}の群${G}は巡回群であり、単位元以外の元が生成元である.
+        }
+        +proof{
+            参考書参照.
+        }
+    >
+
+    +frame(color1)<
+        +problem?:({参考書 問2.8}){
+            位数${15}の巡回群の生成元となりうる元はいくつあるか?
+        }
+        +problem?:({参考書 問2.9}){
+            位数${24}の巡回群の部分群をすべてあげよ.
+        }
+    >
+    +frame(color1)<
+        +problem?:({参考書 問2.10}){
+            \br;
+            1. 群${G}の${2}つの部分巡回群の共通部分は巡回群となることを示せ.\br;
+            2. 位数が互いに素な${2}つの巡回部分群の共通部分は単位元だけであることを示せ.
+        }
+    >
+
+    +frame(color1)?:({${15}並べ})<
+        +p {
+            こういうやつ\href(`https://www.afsgames.com/15puzzle.htm`){https://www.afsgames.com/15puzzle.htm}
+        }
+        +p {
+            デフォルトの1~15までの並びをそのまま${\mathbb{Z}_{15}}としてみると、15並べの操作一つ一つは置換とみなせる.
+            このとき、実は15ならべで許される全操作は偶置換となっている.
+            左右のずらしはそもそも数字のならびが変わらず、上下の移動は4つの連続した場所が循環シフトしていて、これは偶置換である.
+        }
+        +p{
+            よって、15ならべの操作の全体は${A_{15}}となる.
+        }
+    >
+
+    +frame(color1)?:({${15}並べ})<
+        +problem?:({参考書 問2.11})?*?:(4){
+            参考書参照.
+        }
+    >
+
+    +frame(color1)?:({Rubik Cube})<
+        +p{
+            ルービックキューブはしってるはずです.
+        }
+        +p{
+            ここがのぞくのにいいきがする\br;\href(`http://www.ivis.co.jp/text/20100901.pdf`){http://www.ivis.co.jp/text/20100901.pdf}
+        }
+    >
+
+    +frame(color1)?:({あみだくじ})<
+        +p{
+            あみだくじが互換の積で表せることは明らか.
+        }
+    >
+
+    +frame(color1)?:({組紐})<
+        +p{
+            くみひもむず.
+        }
+    >
+
+    +frame(color1)?:({群の作用})<
+        +definition?:({群の作用})?*?:(5){
+            集合${X}への群${G}の作用とは、${G}の各元に${X}からそれ自身への写像が対応しており、それが次の公理を満たすものを言う.
+            \br;1.単位元${e \in G}が恒等写像に対応する.
+            \br;2.${\forall f,g \in G, \forall x \in X, \app{g}{\app{f}{x}}=\app{\paren{g \circ f}}{x}}
+        }
+    >
+
+    +frame(color1)<
+        +p{
+            思い出してみると、実は左移動は作用であったことがわかる.
+        }
+        +p{
+            右移動を参考書を無視して${g^{-1}}を右からかけると書いたのは、
+            作用としてみたときそうしないと2の条件が満たされないからである.
+        }
+    >
+
+    +frame(color1)?:({対称性})<
+        +p{
+            「群論といえば対称性！みたいな話を聞いていたけどどこが?」みたいになってたかもしれないが、
+            作用を考えるとわかるかもしれない.
+        }
+    >
+
+    +frame(color1)<
+        +p{
+            乗法群${\set{\pm 1}}の平面${\mathbb{R}^2}への作用に
+            ${\paren{x,y} \mapsto \paren{x,-y}}や\br;
+            ${\paren{x,y} \mapsto \paren{-x,y}}がある.
+        }
+        +p{
+            これらは${x, y}軸対称の反転で、この作用で不変の図形は線\emph{対称}である.
+        }
+    >
+
+    +frame(color1)?:({二面体群})<
+        +definition?:({二面体群${D_n}})?*?:(6){
+            \br;${\tau = \paren{x,y} \mapsto \paren{x,-y}}
+            \br;${\sigma = \paren{x,y} \mapsto \paren{
+                x\app{\cos}{\frac{2\pi}{n}}-y\app{\sin}{\frac{2\pi}{n}},
+                y\app{\cos}{\frac{2\pi}{n}}+y\app{\sin}{\frac{2\pi}{n}}}}
+            \br;とすると、${D_n = \angle-bracket{\sigma, \tau}}で二面体群${D_n}を定義する.
+        }
+    >
+    +frame(color1)<
+        +p{
+            ${\sigma}はなんだか難しそうだが、反時計周りに${\frac{2\pi}{n}}ラジアン回転させる操作である.
+        }
+        +p{
+            以下の式が基本関係式となる.
+        }
+        +math(${
+            \tau \sigma = \sigma^{-1} \tau 
+        });
+        +math(${
+            \tau^2 = e
+        });
+        +math(${
+            \sigma^n = e
+        });
+    >
+
+    +frame(color1)<
+        +p{
+            ${n}が偶数であるとき、${\sigma^2}で${\sigma^m \paren{0 \leq m \leq n-1}}が尽くされないので、${D_n}は
+            ${H=\set{e, \sigma, \sigma^2, \ldots, \sigma^{n-2}, 
+            \tau, \tau\sigma, \tau\sigma^2, \ldots, \tau\sigma^{n-2}}}と
+            ${\sigma H}に分けられる.${\sigma^2}を別の二面体群の${\sigma}に対応させると、${H \simeq D_{n/2}}であることがわかる.
+        }
+        +p{
+            ${n/2}が奇数のときは、${H, \sigma^{n/2}H}にわけられるといえる(${\sigma^{n/2}\nin H})ので、${\sigma^{n/2}}の巡回群${C_2}と次に示す群の直積を用いて、
+            \br;
+            ${D_n \simeq D_{n/2} \times C_2}と表せる.
+        }
+    >
+
+    +frame(color1)<
+        +definition?:({群の自然な直積}){
+            群${G}と群${H}について、${G\times H}に演算
+            ${
+                \paren{a_1, b_1} \circ \paren{a_2, b_2}
+                = \paren{a_1 a_2, b_1 b_2}
+            }を入れた群を2つの群の直積という.
+        }
+    >
+
+    +frame(color1)<
+        +problem?:({参考書 問3.1}){
+            二面体群${D_3, D_4, D_5, D_6}の置換群による表現を求めよ.
+        }
+    >
+
+    +frame(color1)?:({正${n}面体群})<
+        +p{
+            正${n}面体が${n=4,6,8,12,20}ですべてであることは知ってるかもしれない.
+            正${n}面体を不変にする${\mathbb{R}^3 \rightarrow \mathbb{R}^3}の変換群を正${n}面体群${P_n}という.
+            正多面体の双対(面の中心を頂点とする正多面体との関係)を用いると、正6面体と正8面体、正12面体と正20面体はどちらか一方の変換群と双対の変換があればいいので、
+            通常は正4面体群、正8面体群、正20面体群を考える.
+        }
+    >
+
+    +frame(color1)?:({群の無限次元空間への作用})<
+        +p{
+            ${\mathbb{R} \rightarrow \mathbb{R}}の関数${\app{f}{x}}への
+            ${\set{\pm 1}}の作用
+        }
+        +align[
+            [${1};${ \mapsto \paren{\app{f}{x} \mapsto \app{f}{x}}};];
+            [${-1};${ \mapsto \paren{\app{f}{x} \mapsto \app{f}{-x}}};];
+        ];
+    >
+
+>

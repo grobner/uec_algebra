@@ -1,0 +1,292 @@
+@import: mysteamer
+@require: gr
+@require: code
+@import: matrix
+@import: lheaders/mystdjareport
+@import: listings
+
+let-math \prime = math-char MathOrd (string-unexplode [0x2032])
+
+let-math \varnothing = math-char MathBin `Ø`
+
+let-math \overline m = 
+    let ol = math-char MathOrd (string-unexplode [0x0305]) in
+    ${#m #ol}
+
+let font-size-modify ctx scale inner =
+    let ctx-size =
+      ctx |> set-font-size (get-font-size ctx *' scale)
+    in
+      read-inline ctx-size inner
+
+let-inline ctx \fntsize = font-size-modify ctx 0.8 
+
+let-inline ctx \br = inline-fil ++ embed-block-breakable ctx (block-skip (get-natural-width (read-inline ctx {m})))
+
+let-inline ctx \medium = font-size-modify ctx 2. 
+in
+
+let color1 = Color.rgb (30. /. 255.) (150. /. 255.) (253. /. 255.) in
+
+
+
+Steamer.document (|
+  title = {UEC 代数勉強会 第4回};
+  author = {9trap};
+  institute = {uec19 情報理工学域 Ⅱ類 P1};
+  date = {2021 3 8};
+  show-title = false;
+  show-toc = false;
+  color = color1;
+|) '<
+    +make-title(color1){UEC 代数勉強会 第4回 問題}{9trap}{uec19 情報理工学域 Ⅱ類 P1}{}
+
+    +frame (color1)<
+        +p{
+            ファイル分けた都合上、問題のナンバリングが合ってません. ごめん.
+        }
+    >
+    
+    +frame (color1)<
+        +problem?:({参考書 問2.2}){
+            ${S_3}の左移動による置換表現を求めよ.
+        }
+        +p{
+            教科書の乗積表の元に番号つけるだけ.
+        }
+    >
+
+    +frame(color1)<
+        +problem?:({参考書 問2.3}){
+            ${g \sim h \Leftrightarrow h^{-1}g\in H}で定められた関係が同値関係であることを示せ.
+        }
+        +p{
+            すでにやった.
+        }
+    >
+
+    +frame(color1)?:({})<
+        +problem?:({参考書 問2.4}){
+            ${S_3}の各元の位数を求めよ.
+        }
+        +p{
+            ${e}は当然${1}.
+        }
+        +p{
+            互換である${
+                \paren{1, 2}, \paren{2, 3}, \paren{3, 1}
+            }は${2}.
+        }
+        +p{
+            他${
+                \paren{1, 2, 3}, \paren{1, 3, 2}
+            }は循環シフトだから${3}.
+        }
+    >
+
+    +frame(color1)?:({})<
+        +problem?:({参考書 問2.5}){
+            群${G}の元${x}の位数が${12}のとき、${x^k  \paren{1 \leq k \leq 12}}の位数を求めよ.
+        }
+        +p{
+            ${k}が${12}の約数であれば${12/k}で、そうでなければ${12}.
+        }
+    >
+
+    +frame(color1)<
+        +problem?:({参考書 問2.6}){
+            ${S_4}において、\br;${a=
+                \matrix![
+                    [${1}; ${2}; ${3}; ${4}];
+                    [${2}; ${4}; ${1}; ${3}];
+                ]
+            }とする.\br;
+                1. ${a}の位数を求めよ.\br;
+                2. ${x^m=a}となるような${x}と${m}は${x=a}と${m=1}以外に存在するか?
+        }
+    >
+    +frame(color1)<
+        +align[
+            [${a};${=
+                \matrix![
+                    [${1}; ${2}; ${3}; ${4}];
+                    [${2}; ${4}; ${1}; ${3}];
+                ]}];
+            [${a^2};${=
+                \matrix![
+                    [${1}; ${2}; ${3}; ${4}];
+                    [${4}; ${3}; ${2}; ${1}];
+                ]}];
+        ];
+        +p{
+            だから、${a^4=e}.よって${a}の位数は${4}.
+        }
+        +p{
+            また、上の事実から自明に${a^5=a}.
+        }
+    >
+
+    +frame(color1)<
+        +problem?:({参考書 問2.7}){
+            ${S_3}の元${a=\paren{1,2,3}}と
+            ${b=\paren{1,2}}を生成元として取ったときの基本関係式を示せ.
+            また、${S_4, A_4}の生成元と基本関係式をそれぞれ${1}組あたえよ.
+        }
+        +p{
+            ${a,b}に関する基本関係式は
+            
+        }
+        +align[
+                [${a^3=e};];
+                [${b^2=e};];
+                [${a^{-1}b=ba};];
+            ];
+        +p{
+            の3つ.
+        }
+    >
+    +frame(color1)<
+        +align[
+            [${S_4};${= \angle-bracket{\paren{1,2}, \paren{1,2,3,4}}};];
+        ];
+        +p{
+            ${a = \paren{1,2}, b = \paren{1,2,3,4}}とすると、
+        }
+        +align[
+            [${a^2};${= e};];
+            [${b^4};${= e};];
+            [${\paren{ab}^3};${= e};];
+        ];
+    >
+    +frame(color1)<
+        +align[
+            [${A_4};${= \angle-bracket{\paren{1,2}\paren{3,4}, \paren{1,2,3}}};];
+        ];
+        +p{
+            ${a = \paren{1,2}\paren{3,4}, b = \paren{1,2,3}}とすると、
+        }
+        +align[
+            [${a^2};${= e};];
+            [${b^3};${= e};];
+            [${\paren{ab}^3};${= e};];
+        ];
+    >
+
+    +frame(color1)<
+        +p{
+            置換群(順列)に関する面白いこと\br; \href(`https://deltam.blogspot.com/2019/12/permutationgenerator.html`){https://deltam.blogspot.com/2019/12/permutationgenerator.html}
+        }
+    >
+
+    +frame(color1)<
+        +problem?:({参考書 問2.8}){
+            位数${15}の巡回群の生成元となりうる元はいくつあるか?
+        }
+        +p{
+            参考書 系2.11 より ${10}こ.
+        }
+    >
+
+    +frame(color1)<
+        +problem?:({参考書 問2.9}){
+            位数${24}の巡回群の部分群をすべてあげよ.
+        }
+        +p{
+            生成元の1つを${g}とする.
+            ${\set{e, g^2, g^4, \ldots, g^{22}},}
+            ${\set{e, g^3, g^6, \ldots, g^{21}},}
+            ${\set{e, g^4, g^8, \ldots, g^{20}},}
+            ${\set{e, g^6, g^{12}, g^{18}},}
+            ${\set{e, g^{12}}}が部分群.
+        }
+    >
+
+    +frame(color1)<
+        +problem?:({参考書 問2.10}){
+            \br;
+            1. 群${G}の${2}つの部分巡回群の共通部分は巡回群となることを示せ.\br;
+            2. 位数が互いに素な${2}つの巡回部分群の共通部分は単位元だけであることを示せ.
+        }
+    >
+
+    +frame(color1)<
+        +p{
+            2つの巡回群を${H_1, H_2}とする.
+        }
+        +p{
+            ${H_1, H_2}は群だから、どちらも${e}を含む.
+            よって、${e \in H_1 \cap H_2}.
+        }
+        +p{
+            ${H_1 \cap H_2}が単位元のみの集合であるとき、これは巡回群である.
+            また、${H_1 \cap H_2}が単位元以外を含むとき、
+            ${H_1 = \angle-bracket{h_1}, H_2 = \angle-bracket{h_2}}で、
+            ${a_1}を${h_1^{a_1} \in H_2}となる最小の正の整数とする.
+            このとき${h_1^{a_1}}は${h_2}の累乗と一致するため${a_2}を${h_2^{a_2}=h_1^{a_1}}とする.
+        }
+        +p{
+            また、${h_1^{ka_1+r} \in H_2 \paren{k \in \mathbb{N}, 0 < r < a}}
+            を仮定すると、${h_1^{ka_1+r} = h_2^{ka_2}h_1^r \in H_2}.
+            よって、${h_1^r \in H_2}となるが、これは${a_1}を${h_1^{a_1} \in H_2}となる最小の正の整数とする仮定に反する.
+            よって帰謬法から${H_2}に属するすべての${h_1}の累乗は${h_1^{ka_1}}で表せる.
+        }
+        +p{
+            以上より、${h_1^{a_1}}が${H_1 \cap H_2}の生成元となる.
+        }
+    >
+
+    +frame(color1)<
+        +p{
+            位数が互いに素な2つの巡回部分群を${H_1, H_2}とおく.
+        }
+        +p{
+            1. から${H_1 \cap H_2}は巡回群である.
+            また、参考書 系2.8 から${\abs{H_1 \cap H_2}}は${\abs{H_1}}の約数でもあり
+            ${\abs{H_2}}の約数でもある.
+            しかし、${\app{gcd}{\abs{H_1}, \abs{H_2}}=1}より${H_1 \cap H_2}の元は1個である.
+        }
+        +p{
+            よって${H_1 \cap H_2 = \set{e}}.
+        }
+    >
+
+    +frame(color1)<
+        +problem?:({参考書 問3.1}){
+            二面体群${D_3, D_4, D_5, D_6}の置換群による表現を求めよ.
+        }
+        +align[
+            [
+                ${e};
+                ${\mapsto e}
+            ];
+            [
+                ${\sigma};
+                ${\mapsto \paren{1, 3, 2}\circ\paren{4, 5, 6}}
+            ];
+            [
+                ${\sigma^2};
+                ${\mapsto \paren{1, 2, 3}\circ\paren{4, 6, 5}}
+            ];
+            [
+                ${\tau};
+                ${\mapsto \paren{1, 4}\circ\paren{2, 5}\circ\paren{3, 6}}
+            ];
+            [
+                ${\tau\sigma};
+                ${\mapsto \paren{1, 3, 2}\circ\paren{4, 5, 6}
+                \circ\paren{1, 4}\circ\paren{2, 5}\circ\paren{3, 6}}
+            ];
+            [
+                ${\tau\sigma^2};
+                ${\mapsto \paren{1, 2, 3}\circ\paren{4, 6, 5}
+                \circ\paren{1, 4}\circ\paren{2, 5}\circ\paren{3, 6}}
+            ];
+        ];
+    >
+
+    +frame(color1)<
+        +p{
+            あとはめんどくさいだけです.
+        }
+    >
+>
