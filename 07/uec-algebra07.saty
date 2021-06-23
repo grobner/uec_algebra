@@ -1,0 +1,478 @@
+% https://github.com/abenori/satysfi-class-jlreq.git
+@require: class-jlreq/jlreq
+@require: class-jlreq/theorem
+@require: color
+@require: base/length
+@require: annot
+@require: derive/derive
+
+let-math \sgn = math-char MathOp `sgn`
+let-math \emptyset = math-char MathOrd `∅`
+let-math \notin = math-char MathOrd `∉`
+
+let-mutable theorem-counter <- 0
+let-block ctx +theorem = JLReqTheorem.theorem-scheme (|JLReqTheorem.default-config-theorem with
+  font = [italic]; 
+|) {定理} theorem-counter ctx
+
+let-block ctx +definition = JLReqTheorem.theorem-scheme (|JLReqTheorem.default-config-theorem with
+  font = [italic]; 
+|) {定義} theorem-counter ctx
+
+let-block ctx +notation = JLReqTheorem.theorem-scheme (|JLReqTheorem.default-config-theorem with
+  font = [italic]; 
+|) {記法} theorem-counter ctx
+
+let-block ctx +example = JLReqTheorem.theorem-scheme (|JLReqTheorem.default-config-theorem with
+  font = [italic]; 
+|) {例} theorem-counter ctx
+
+let-block ctx +lemma = JLReqTheorem.theorem-scheme (|JLReqTheorem.default-config-theorem with
+  font = [italic]; 
+|) {補題} theorem-counter ctx
+
+let-block ctx +corollary = JLReqTheorem.theorem-scheme (|JLReqTheorem.default-config-theorem with
+  font = [italic]; 
+|) {系} theorem-counter ctx
+
+let-block ctx +proposition = JLReqTheorem.theorem-scheme (|JLReqTheorem.default-config-theorem with
+  font = [italic]; 
+|) {命題} theorem-counter ctx
+
+let-mutable proof-counter <- 0
+let-mutable number-of-paragraph-in-proof <- -1
+let-mutable paragraph-counter <- 0
+
+let-block ctx +proof inner =
+  let () = proof-counter <- !proof-counter + 1 in
+  let ref-key = `number-of-paragraph-in-proof` ^ (arabic !proof-counter) in
+  let ib = (read-inline ctx {証明}) ++ (inline-skip 10pt) in
+  let () = JLReqParagraph.set-paragraph-top-text ib in
+  let () = number-of-paragraph-in-proof <- (
+    match get-cross-reference ref-key with
+      | None -> 1
+      | Some(s) -> (match Int.of-string-opt s with
+        | None -> 1
+        | Some(n) -> n
+      )
+    ) in
+  let () = paragraph-counter <- 0 in
+  let bb = (read-block ctx inner) in
+  let () = register-cross-reference ref-key (arabic !paragraph-counter) in
+  let () = number-of-paragraph-in-proof <- -1 in
+bb
+
+let qedsymbol ctx =
+  let ib = read-inline ctx {阿} in
+  let (aw,h,d) = get-natural-metrics ib in
+  let w = aw *' 0.6 in
+  let xshift = 3pt in
+  inline-fil ++ 
+  (
+    inline-graphics (w +' xshift) h d (fun (x,y) ->
+      [
+        stroke 0.5pt Color.black 
+          (start-path (x +' xshift, y -' d) 
+            |> line-to (x +' xshift +' w, y -' d)
+            |> line-to (x +' xshift +' w, y +' h)
+            |> line-to (x +' xshift, y +' h)
+            |> close-with-line
+          );
+      ]
+    )
+  )
+
+
+let-block ctx +prp it =
+  let ib = read-inline ctx it in
+  let bb = 
+    (JLReqParagraph.get-paragraph-boxes (| indent = ~(jlreq-length @`1zw`);|) ctx ib) ++ (
+      if !number-of-paragraph-in-proof >= 0 then
+        let () = paragraph-counter <- !paragraph-counter + 1 in
+        if !number-of-paragraph-in-proof == !paragraph-counter then
+            qedsymbol ctx
+        else inline-nil
+      else inline-nil
+    ) in
+  line-break true true ctx bb
+
+in
+
+document(|
+  title = {UEC 代数勉強会 第7回};
+  author = {9trap/隕石};
+  date = {2021/06/22};
+  show-title = true;
+  show-toc = true;
+|) '<
+  +section{復習}<
+    +subsection{はじめに} <
+      +p{
+        だいぶ間が空いたので復習を入れておきます。
+      }
+    >
+    +subsection{代数系}<
+      +p{
+        集合に演算を導入し、特定の条件を満たすようなモデルを考えると、さまざまな構造を扱えてうれしい。
+        そういったモデルを代数系という。
+      }
+      +definition?:(`def-group`) ?:({群})<
+        +p {
+          集合${G}と${G}における2項演算
+        }
+        +math (${
+          \circ : G \times G \rightarrow G \; \paren{a, b} \mapsto a \circ b
+        });
+        +p {
+          が次の条件を満たすとき、組${\paren{G, \circ}}を群という。
+        }
+        +align[
+          [${\text!{(1)}}; ${\forall a,b,c \in G \paren{a \circ b} \circ c = a \circ \paren{b \circ c}}; ${\text!{(結合律)}};];
+          [${\text!{(2)}}; ${\exists e \in G \sqbracket{
+            \forall a \in G \sqbracket{
+              e \circ a = a \circ e = a
+            }
+          }}; ${\text!{(単位元の存在)}};];
+          [${\text!{(3)}}; ${\forall g \in G \sqbracket{
+            \exists h \in G \sqbracket{
+              g \circ h = h \circ g = e
+            }
+          }}; ${\text!{(逆元の存在)}};];
+        ];
+        +p{
+          誤解を生まないと判断された多くの場合、${G}そのものを群と呼ぶ。
+        }
+      >
+      +p{
+        群${G}が可換律${\forall a,b \in G \sqbracket{a \circ b = b \circ a}}を満たす場合、${G}を可換群もしくはAbel群と呼ぶ。
+      }
+      +p{
+        演算子は、可換群であれば${+}を使ったり、そうでない場合は省略する事が多い。
+      }
+
+      +definition?:(`def-ring`) ?:({環})<
+        +p {
+          集合${A}と${A}における積と和と呼ばれる2つの2項演算
+        }
+        +math (${
+          \cdot : A \times A \rightarrow A \; \paren{a, b} \mapsto a \cdot b
+        });
+        +math (${
+          + : A \times A \rightarrow A \; \paren{a, b} \mapsto a + b
+        });
+        +p {
+          が次の条件を満たすとき、組${\paren{A, +, \cdot}}を環という。
+        }
+        +align[
+          [${\text!{(1)}}; ${\paren{A, +} \text!{は可換群を成す}}];
+          [${\text!{(2)}}; ${\forall a, b, c \in A \sqbracket{\paren{ab}c = a\paren{bc}}}; ${\text!{(乗法の結合律)}};];
+          [${\text!{(3)}}; ${\forall a, b, c \in A \sqbracket{ a\paren{b+c} = ab + ac }}; ${\text!{(分配律)}};];
+        ];
+        +p{
+          誤解を生まないと判断された多くの場合、${A}そのものを環と呼ぶ。
+        }
+      >
+
+      +definition?:(`def-field`) ?:({体})<
+        +p {
+          集合${K}と${K}における積と和と呼ばれる2つの2項演算
+        }
+        +math (${
+          \cdot : K \times K \rightarrow K \; \paren{x, y} \mapsto x \cdot y
+        });
+        +math (${
+          + : K \times K \rightarrow K \; \paren{x, y} \mapsto x + y
+        });
+        +p {
+          が次の条件を満たすとき、組${\paren{K, +, \cdot}}を環という。
+        }
+        +align[
+          [${\text!{(1)}}; ${\paren{K, +} \text!{は可換群を成す}}];
+          [${\text!{(2)}}; ${\paren{K \\ \brace{0}, \cdot} \text!{は可換群を成す}}];
+          [${\text!{(3)}}; ${\forall a, b, c \in A \sqbracket{ a\paren{b+c} = ab + ac }}; ${\text!{(分配律)}};];
+        ];
+        +p{
+          誤解を生まないと判断された多くの場合、${K}そのものを体と呼ぶ。
+        }
+      >
+
+      +p{
+        代数系は他にも色々ある。例えば亜群(マグマ)、半群、モノイド、Kleene代数など。
+      }
+    >
+    +subsection{準同型写像}<
+      +definition?:(`def-homomorphism`) ?:({準同型写像})<
+        +p{
+          群${G, H}とその間の写像${\phi : G \rightarrow H}が以下を満たすとき、写像${\phi}を準同型であるという。
+        }
+        +math (
+          ${\forall x,y \in G \sqbracket{ \app{\phi}{x} \app{\phi}{y} = \app{\phi}{xy} }}
+        );
+      >
+    >
+    +subsection{置換表現}<
+      +proposition?:(`prop-prodsubst`)?:({群の積の単射性})<
+        +p{
+          有限群${G}の演算について、片方の引数を${g \in G}に固定した写像${\phi : G \rightarrow G \; a \mapsto ga}は単射である。
+        }
+      >
+      +proof<
+        +prp{
+          任意の${a, b \in G}について、
+        }
+        +math (${
+          a = b \Leftrightarrow g^{-1}a = g^{-1}b
+        });
+        +prp{
+
+        }
+      >
+      +p{
+        つまり、この写像は群の要素の置換とみなすことができる。
+        各元に番号をつける写像を${f}とすると、${f \circ \phi \circ f^{-1}}は${S_n}の元である。
+      }
+      +definition ?:(`def-substexp`) ?:({左移動による置換表現})<
+        +p{
+          この写像${\phi}を左移動といい、${f \circ \phi \circ f^{-1}}は左移動による置換表現という。
+        }
+      >
+    >
+    +subsection{剰余類}<
+      +notation ?:(`nota-gA`) ?:({左移動の像})<
+        +p{
+          群${G}の部分集合${A}について、${g}による左移動の${A}の像を${gA}とかく。すなわち、
+        }
+        +math (${
+          gA := \setsep{ga}{a\in A}
+        });
+      >
+      +proposition ?:(`prop-numgA`)<
+        +p{
+          群${G}の有限部分集合${A}について、${\abs{A} = \abs{gA}}
+        }
+      >
+      +proof<
+        +prp{
+          命題\ref(`prop-prodsubst`);より。
+        }
+      >
+      +lemma ?:(`lemma-left`) ?:({部分群の左移動})<
+        +p{
+          群${G}の部分群${H}について、${g \in H}ならば${gH = H}、${g \notin H}ならば${gH \cap H = \emptyset}
+        }
+      >
+      +proof<
+        +prp{
+          前者は群の演算が閉じていることから自明。
+        }
+        +prp{
+          ${g \notin H}の場合、${gH \cap H \neq \emptyset}とすると、
+          ${\exists x \sqbracket{x \in gH \land x \in H}}。
+        }
+        +prp{
+          その${x}について、${x \in gH}だから${\exists y \sqbracket{x = gy \land y \in H}}。
+        }
+        +prp{
+          その${y}について、${xy^{-1} = g}。${x \in H, y \in H}より${g \in H}が導かれるがこれは仮定に矛盾する。よって、帰謬法から${gH \cap H = \emptyset}。
+        }
+      >
+      +proposition ?:(`corol-eqresidue`)<
+        +p{
+          群${G}とその部分群${H}について、${a \sim b \Leftrightarrow aH = bH}として関係を定義すると、この関係${\sim}は同値関係となる。
+        }
+      >
+      +proof<
+        +prp{
+          自明に${aH = aH \land \paren{aH=bH \Leftrightarrow bH=aH}}であるから、反射律と対称律が成り立つ。
+        }
+        +prp{
+          ${aH=bH \land bH=cH}と仮定すると、${=}の推移律から${aH=cH}。よって、推移律も満たす。
+        }
+      >
+      +corollary <
+        +p{
+          上で定めた関係は同値関係であるから、同値類${gH}により、群${G}が分割される。
+        }
+      >
+      +definition ?:(`def-leftresidue`) ?:({左剰余類})<
+        +p{
+          ここでの同値類${gH}を左剰余類という。
+        }
+      >
+      +theorem ?:(`theorem-lagrange`) ?:({Lagrangeの定理})<
+        +p{
+          部分群の位数は元の群の位数の約数である。
+        }
+      >
+      +proof<
+        +prp{
+          命題\ref(`prop-numgA`);から、部分群から導かれる左剰余類はすべて要素数が同じである。
+          よって、分轄数${[G:H]}について、${\abs{G} = [G:H] \cdot \abs{H}}。
+        }
+      >
+    >
+    +subsection{作用}<
+      +definition ?:(`def-action`) ?:({作用})<
+        +p{
+          群${G}から集合${X}について、演算${\bullet:G \times X \rightarrow X}が以下を満たすとき、これを作用という。
+        }
+        +align[
+          [${\text!{(1)}}; ${\forall x \in X \sqbracket{ e \bullet x  = x}};];
+          [${\text!{(2)}}; ${
+            \forall g, h \in G \sqbracket{
+              \forall x \in X \sqbracket{ \paren{h g} \bullet x = h \bullet \paren{g \bullet x} }
+            }
+          };];
+        ];
+      >
+    >
+  >
+  +section{対称式と交代式}<
+    +subsection{多項式への作用} <
+      +proposition ?:(`s`) ?:({置換群の多項式への作用}) <
+        +p{
+          置換群から${n}変数多項式環/有理関数体の変換への対応
+        }
+        +math(${
+          \sigma \in S_n \mapsto \app{\sigma f}{x_1, x_2, \cdots, x_n}
+        });
+        +p{
+          を以下のように定める
+        }
+        +math(${
+          \app{\sigma f}{x_1, x_2, \cdots, x_n}:=
+          \app{f}{x_{\app{\sigma}{1}}, x_{\app{\sigma}{2}}, \cdots, x_{\app{\sigma}{n}}}
+        });
+        +p{
+          このとき、この対応は作用である。
+        }
+      >
+      +proof<
+        +prp{
+          置換群の単位元は恒等射であるから、条件(1)がみたされる。
+        }
+        +prp{
+          また、
+        }
+        +align[
+          [${\app{ \paren{\sigma \paren{\tau f}} }{x_1, x_2, \cdots, x_n}}; ${= \app{\paren{\tau f}}{x_{\app{\sigma}{1}}, x_{\app{\sigma}{2}}, \cdots, x_{\app{\sigma}{n}}}};];
+          [${}; ${= \app{f}{x_{\app{\tau}{\app{\sigma}{1}}}, x_{\app{\tau}{\app{\sigma}{2}}}, \cdots, x_{\app{\tau}{\app{\sigma}{n}}}}};];
+          [${}; ${= \app{f}{x_{\app{\paren{\sigma \tau}}{1}}, x_{\app{\paren{\sigma \tau}}{2}}, \cdots, x_{\app{\paren{\sigma \tau}}{n}}}};];
+          [${}; ${= \app{\paren{\sigma \tau}f}{x_1, x_2, \cdots, x_n}};];
+        ];
+      >
+      
+    >
+    +subsection{対称式と交代式} <
+      +p{
+        多項式のうち変数置換で不変であるものを対称式といい、符号が変わるものを交代式という。
+      }
+      +p{
+        交代式の符号は置換の符号と一致することを導けるが、ここでは示さない。
+      }
+      +math (${
+        \app{\paren{\sigma f}}{x_1, x_2, \cdots, x_n} = \paren{\sgn \sigma} \app{f}{x_1, x_2, \cdots, x_n}
+      });
+      +example ?:(`ex-elemsympoly`) ?:({基本対称式})<
+        +p{
+          対称式の代表的な例に、以下のような基本対称式がある。
+        }
+        +math (${
+          s_k = \sum_{1 \leq i_1 < i_2 < \cdots < i_k \leq n} x_{i_1}x_{i_2}\ldots x_{i_k}
+        });
+        +p{
+          いま、${x_k}と${x_l}を入れ替えたとする。すなわち、${\paren{k, l}}を作用させたとする。ただし、${\paren{k, l} = \paren{l, k}}であるから、${k < l}とする。${l < k}の場合はメタ的に${k}と${l}を入れ替えた文言を用意すればいい。${k=l}ならば、恒等置換であるので${s_k}が不変であるのは言うまでもない。
+        }
+        +p{
+          ${s_k}は、全ての長さ${k}の狭義単調増加自然数列
+          ${i:\paren{1, \cdots, k} \rightarrow \paren{1, \cdots, n} \;
+          a \mapsto \app{i}{a}}についての項${x_{\app{i}{1}}x_{\app{i}{2}} \ldots x_{\app{i}{k}}}の和である。
+        }
+        +p{
+          ${x_k}と${x_l}両方が含まれる項と両方とも含まれない項は${k, l}の置換によって不変である。
+          任意の${x_k}が含まれていて${x_l}が含まれていない項${t}について、${tx_l/x_k}は項であり${s_k}に含まれる。これらの和は${x_k}と${x_l}の置換で不変であり、任意の${x_l}が含まれていて${x_k}が含まれていない項はこれらで尽くされるため${s_k}は互換で不変。
+        }
+        +p{
+          任意の置換は互換の積で表せるから${s_k}は任意の置換で不変である。
+        }
+      >
+      +example ?:(`ex-vandepoly`) ?:({差積})<
+        +p{
+          対称式の代表的な例に、差積がある。
+        }
+        +math (${
+          \app{\Delta}{x_1, x_2, \cdots, x_n} = \prod_{1 \leq i < j \leq n} \paren{x_i - x_j}
+        });
+      >
+      +definition ?:(`def-termtype`) ?:({単項式の型})<
+        +p{
+          ${n}変数の単項式の型とは、${x_i}の次数による${n}つ組${\bm{a}}のことをいう。
+        }
+        +p{
+          ${x_1^{a_1}x_2^{a_2}\ldots x_n^{a_n}}の型は${\bm{a} = \paren{a_1, a_2, \cdots, a_n}}
+        }
+      >
+      +definition ?:(`def-termorder`) ?:({単項式の順序})<
+        +p{
+          型${\bm{a}, \bm{b}}の半順序${>}を辞書式順序とする。すなわち、${a_i \neq b_i}である最小の${i}について、${a_i > b_i}であるとき、またそのときのみ${\bm{a} > \bm{b}}とする。
+        }
+        +p{
+          また、順序${\geq}を${\forall \bm{a}, \bm{b} \sqbracket{\bm{a} \geq \bm{b} \Leftrightarrow \paren{ \bm{a} > \bm{b} \lor \bm{a} = \bm{b} } }}で定める。
+        }
+        +p{
+          順序${\geq}は自然数の順序によるから全順序である。${n}次の単項式全体の集合は有限であるから、この順序において単項式の集合の最大元が存在する。
+        }
+      >
+      +proposition ?:(`prop-term1`) ?:({基本対称式の積による単項式})<
+        +p {
+          基本対称式の積${s_1^{d_1}s_2^{d_2} \cdots s_n^{d_n}}の単項式のうち上で定めた順序で最大の項は${x^{\sum_{k=1}^n d_k}x^{\sum_{k=2}^n d_k}\cdots x^{d_n}}である。
+        }
+      >
+      +proof<
+        +prp{
+          辞書式順序では小さい添字の次数のほうが優先されるから、${s_1^{d_1}s_2^{d_2} \cdots s_n^{d_n}}のうち、${x_1}の次数が一番高いものが候補である。
+        }
+        +prp{
+          例\ref(`ex-elemsympoly`);の定義からどの${s_k}の単項式も${x_l}の次数はたかだか1である。よって、すべての${s_k}について${x_1}を含む項の積によってなる単項式の字数である${d_1 + d_2 + \cdots + d_n}が${x_1}の次数の最大である。${s_k}の各項の次数は${k}であるから${x_1}を含む項は${n-1}個のうちから${k-1}個を選ぶ組み合わせの数と同じであって、${x_1}がこの次数である項はいくつかあることがある。${s_1}の各項の次数は1であって${x_1}を含むと${x_2}を含むことができないから、これらの単項式のうち${x_2}の次数が最大であるものは${d_2 + \cdots + d_n}である。続きは帰納的に示される。
+        }
+        +prp{
+          
+        }
+      >
+      +theorem ?:(`theorem-elemsympoly`) ?:({対称式の表現})<
+        +p{
+          すべての対称式は基本対称式の多項式で表される。
+        }
+      >
+      +proof<
+        +p{
+          命題\ref(`prop-term1`);から、順に基本対称式の積で表せる最大の単項式を引いていくと0になる。
+        }
+        +p{
+          具体的には、対称式${f}の最大次数${l}の最大の単項式の型${\bm{a} = \paren{a_1, a_2, \cdots, a_l}}とすると、${s_1^{a_1-a_2}s_2^{a_2-a_3} \cdots s_n^{a_n}}の最大の項の型は${\bm{a}}だから、${f - s_1^{a_1-a_2}s_2^{a_2-a_3} \cdots s_n^{a_n}}の最大の項の型${\bm{b}}について、${\bm{a} > \bm{b}}。帰納的に項の数が減っていく(もとの項の数を${p}とすると${j}ステップ目の項の数は${p-j}であることを帰納的に示すことができる)。よって、定理を示すことができる。
+        }
+      >
+    >
+    +subsection{Hilbertの基底定理} <
+      +p{
+        \href(`http://aozoragakuen.sakura.ne.jp/taiwa/taiwaNch02/huhensiki/node1.html`){ここ}がわかりやすい。
+      }
+    >
+  >
+  +section{正規部分群と商群}<
+    +subsection{正規部分群と商群} <
+      
+    >
+    +subsection{準同型定理} <
+      
+    >
+    +subsection{次元定理} <
+      
+    >
+    +subsection{指標} <
+      
+    >
+  >
+  +section{射影幾何について}<
+  >
+>
