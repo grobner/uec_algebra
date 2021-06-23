@@ -5,10 +5,16 @@
 @require: base/length
 @require: annot
 @require: derive/derive
+@require: matrix
 
 let-math \sgn = math-char MathOp `sgn`
 let-math \emptyset = math-char MathOrd `∅`
 let-math \notin = math-char MathOrd `∉`
+
+let-mutable problem-counter <- 0
+let-block ctx +problem = JLReqTheorem.theorem-scheme (|JLReqTheorem.default-config-theorem with
+  font = [italic]; 
+|) {問} problem-counter ctx
 
 let-mutable theorem-counter <- 0
 let-block ctx +theorem = JLReqTheorem.theorem-scheme (|JLReqTheorem.default-config-theorem with
@@ -334,13 +340,13 @@ document(|
           置換群から${n}変数多項式環/有理関数体の変換への対応
         }
         +math(${
-          \sigma \in S_n \mapsto \app{\sigma f}{x_1, x_2, \cdots, x_n}
+          \sigma \in S_n \mapsto \app{\paren{\sigma f}}{x_1, x_2, \cdots, x_n}
         });
         +p{
           を以下のように定める
         }
         +math(${
-          \app{\sigma f}{x_1, x_2, \cdots, x_n}:=
+          \app{\paren{\sigma f}}{x_1, x_2, \cdots, x_n}:=
           \app{f}{x_{\app{\sigma}{1}}, x_{\app{\sigma}{2}}, \cdots, x_{\app{\sigma}{n}}}
         });
         +p{
@@ -398,11 +404,21 @@ document(|
       >
       +example ?:(`ex-vandepoly`) ?:({差積})<
         +p{
-          対称式の代表的な例に、差積がある。
+          交代式の代表的な例に、差積がある。
         }
         +math (${
           \app{\Delta}{x_1, x_2, \cdots, x_n} = \prod_{1 \leq i < j \leq n} \paren{x_i - x_j}
         });
+        +p{
+          ${x_k, x_l}を入れ替えることを考える。
+          差積が${\paren{x_p - x_k}}で割り切れるとする。このとき、${\paren{x_p - x_l}}でも割り切れる。${\paren{x_p - x_k}\paren{x_p - x_l}}は${k, l}の置換で不変である。
+        }
+        +p{
+          差積が${\paren{x_k - x_p}}で割り切れるとする。${p < l}のとき、差積は${\paren{x_p - x_l}}で割り切れる。それらの積${\paren{x_k - x_p}\paren{x_p - x_l}}は${k, l}の置換で不変。${p > l}のとき、差積は${\paren{x_l - x_p}}で割り切れる。それらの積${\paren{x_k - x_p}\paren{x_l - x_p}}は${k, l}の置換で不変。
+        }
+        +p{
+          以上より、${\paren{x_k - x_l}}以外の積は${k, l}の置換で不変であるが、${\paren{x_k - x_l}}だけは符号が変わってしまう。よって、差積は交代式。
+        }
       >
       +definition ?:(`def-termtype`) ?:({単項式の型})<
         +p{
@@ -452,6 +468,175 @@ document(|
           具体的には、対称式${f}の最大次数${l}の最大の単項式の型${\bm{a} = \paren{a_1, a_2, \cdots, a_l}}とすると、${s_1^{a_1-a_2}s_2^{a_2-a_3} \cdots s_n^{a_n}}の最大の項の型は${\bm{a}}だから、${f - s_1^{a_1-a_2}s_2^{a_2-a_3} \cdots s_n^{a_n}}の最大の項の型${\bm{b}}について、${\bm{a} > \bm{b}}。帰納的に項の数が減っていく(もとの項の数を${p}とすると${j}ステップ目の項の数は${p-j}であることを帰納的に示すことができる)。よって、定理を示すことができる。
         }
       >
+      +problem<
+        +p{
+          ${x_1^{4} + \cdots + x_n^{4}}を基本対称式の多項式で表せ。
+        }
+        +p{
+          ${x_1^{4}}を最大の単項式として含む基本対称式による単項式は${s_1^{4}}。
+        }
+        +align[
+          [${s_1^{4}}; ${= \paren{\sum_{i=1}^{n} x_i}^4};];
+          [${}; ${
+            = \sum_{i=1}^{n} x_i^4 + 
+            \sum_{1 \leq i_1 < i_2 \leq n} \paren{4x_{i_1}^3x_{i_2} + 6x_{i_1}^2x_{i_2}^2 + 4x_{i_1}x_{i_2}^3} +
+            \sum_{1 \leq i_1 < i_2 < i_3 \leq n} \paren{
+              12x_{i_1}^2x_{i_2}x_{i_3} + 12x_{i_1}x_{i_2}^2x_{i_3} + 12x_{i_1}^2x_{i_2}x_{i_3}^2
+            }
+          };];
+          [${};${
+            + \sum_{1 \leq i_1 < i_2 < i_3 < i_4 \leq n}
+              24x_{i_1}x_{i_2}x_{i_3}x_{i_4}
+          };];
+        ];
+        +p{
+          より、
+        }
+        +align[
+          [${\sum_{i=1}^{n}x_i^4 - s_1^{4}}; ${
+            = - \sum_{1 \leq i_1 < i_2 \leq n} \paren{4x_{i_1}^3x_{i_2} + 6x_{i_1}^2x_{i_2}^2 + 4x_{i_1}x_{i_2}^3} -
+            \sum_{1 \leq i_1 < i_2 < i_3 \leq n} \paren{
+              12x_{i_1}^2x_{i_2}x_{i_3} + 12x_{i_1}x_{i_2}^2x_{i_3} + 12x_{i_1}^2x_{i_2}x_{i_3}^2
+            }};];
+          [${};${
+            - \sum_{1 \leq i_1 < i_2 < i_3 < i_4 \leq n}
+              24x_{i_1}x_{i_2}x_{i_3}x_{i_4}
+          };];
+        ];
+        +p{
+          次に最大の単項は${-4x_1^3x_2}であるから、${-4s_1^{2}s_2}を引けば良い。
+        }
+        +align[
+          [${s_1^{2}s_2}; ${= 
+          \paren{\sum_{i=1}^{n} x_i}^2 \paren{\sum_{1 \leq i_1 < i_2 \leq n} x_{i_1}x_{i_2}} };];
+          [${}; ${=
+            \paren{\sum_{i=1}^{n} x_i^2
+              + \sum_{1 \leq i_1 < i_2 \leq n} 2x_{i_1}x_{i_2}
+            } \paren{\sum_{1 \leq i_1 < i_2 \leq n} x_{i_1}x_{i_2}}
+           };];
+          [${}; ${=
+            \sum_{1 \leq i_1 < i_2 \leq n} \paren{
+               x_{i_1}^3x_{i_2} + 2x_{i_1}^2x_{i_2}^2 + x_{i_1}x_{i_2}^3
+            }
+            +\sum_{1 \leq i_1 < i_2 < i_3 \leq n} \paren{
+               5x_{i_1}^2x_{i_2}x_{i_3} + 5x_{i_1}x_{i_2}^2x_{i_3} + 5x_{i_1}x_{i_2}x_{i_3}^2
+            }
+          };];
+          [${}; ${
+            +\sum_{1 \leq i_1 < i_2 < i_3 < i_4 \leq n} 12x_{i_1}x_{i_2}x_{i_3}x_{i_4}
+          };];
+        ];
+        +p{
+          より
+        }
+        +align[
+          [${\paren{\sum_{i=1}^{n}x_i^4} - s_1^{4} + 4s_1^2s_2}; ${
+            = \sum_{1 \leq i_1 < i_2 \leq n} 2x_{i_1}^2x_{i_2}^2 +
+            \sum_{1 \leq i_1 < i_2 < i_3 \leq n} \paren{
+              8x_{i_1}^2x_{i_2}x_{i_3} + 8x_{i_1}x_{i_2}^2x_{i_3} + 8x_{i_1}x_{i_2}x_{i_3}^2
+            }
+          };];
+          [${}; ${
+            + \sum_{1 \leq i_1 < i_2 < i_3 < i_4 \leq n}
+              24x_{i_1}x_{i_2}x_{i_3}x_{i_4}
+          };];
+        ];
+        +p{
+          次に最大の単項は${2x_1^2x_2^2}であるから、${2s_2^2}を引けば良い。
+        }
+        +align[
+          [${s_2^2}; ${= \paren{\sum_{1 \leq i_1 < i_2 \leq n} x_{i_1}x_{i_2}}^2};];
+          [${}; ${= \sum_{1 \leq i_1 < i_2 \leq n} x_{i_1}^2x_{i_2}^2 +
+            \sum_{1 \leq i_1 < i_2 < i_3 \leq n}\paren{
+              2x_{i_1}^2x_{i_2}x_{i_3} + 2x_{i_1}x_{i_2}^2x_{i_3} +  2x_{i_1}x_{i_2}x_{i_3}^2
+            }+
+            \sum_{1 \leq i_1 < i_2 < i_3 < i_4 \leq n}
+            6x_{i_1}x_{i_2}x_{i_3}x_{i_4}
+          };];
+        ];
+        +p{
+          より、
+        }
+        +align[
+          [${\paren{\sum_{i=1}^{n}x_i^4} - s_1^{4} + 4s_1^2s_2 - 2s_2^2}; ${
+            = \sum_{1 \leq i_1 < i_2 < i_3 \leq n} \paren{
+              4x_{i_1}^2x_{i_2}x_{i_3} + 4x_{i_1}x_{i_2}^2x_{i_3} + 4x_{i_1}x_{i_2}x_{i_3}^2
+            }
+          };];
+          [${}; ${
+            + \sum_{1 \leq i_1 < i_2 < i_3 < i_4 \leq n}
+              12x_{i_1}x_{i_2}x_{i_3}x_{i_4}
+          };];
+        ];
+        +p{
+          次に最大の単項は${4x_1^2x_2x_3}であるから、${4s_1s_3}を引けば良い。
+        }
+        +align[
+          [${s_1s_3}; ${= 
+            \paren{
+              \sum_{i}^{n} x_{i}
+            }\paren{
+              \sum_{1 \leq i_1 < i_2 < i_3 \leq n} x_{i_1}x_{i_2}x_{i_3}
+            }
+          };];
+          [${}; ${=
+            \sum_{1 \leq i_1 < i_2 < i_3 \leq n} \paren{
+              x_{i_1}^2x_{i_2}x_{i_3} + x_{i_1}x_{i_2}^2x_{i_3} + x_{i_1}x_{i_2}x_{i_3}^2
+            }+\sum_{1 \leq i_1 < i_2 < i_3 < i_4 \leq n} 4x_{i_1}x_{i_2}x_{i_3}x_{i_4}
+          };];
+        ];
+        +p{
+          より、
+        }
+        +align[
+          [${\paren{\sum_{i=1}^{n}x_i^4} - s_1^{4} + 4s_1^2s_2 - 2s_2^2 - 4s_1s_3}; ${
+            = -\sum_{1 \leq i_1 < i_2 < i_3 < i_4 \leq n} 4x_{i_1}x_{i_2}x_{i_3}x_{i_4}
+          };];
+          [${}; ${= -4s_4
+          };];
+        ];
+        +p{
+          よって、${\sum_{i=1}^{n} x_i^4 = s_1^4 - 4s_1^2s_2 + 2s_2^2 + 4s_1s_3 - 4s_4}。
+        }
+      >
+      +example ?:(`ex-vandermonde`) ?:({Vandermondeの行列式})<
+        +p{
+          等比級数になっているベクトルを並べた行列の行列式
+        }
+        +math (${
+          V_n = \abs{\matrix![
+            [${1}; ${1}; ${\cdots}; ${1}];
+            [${x_1}; ${x_2}; ${\cdots}; ${x_n}];
+            [${\vdots}; ${\vdots}; ${\ddots}; ${\vdots}];
+            [${x_1^{n-1}}; ${x_2^{n-1}}; ${\cdots}; ${x_n^{n-1}}];
+          ]} = \prod_{1 \leq i < j \leq n} \paren{x_j - x_i}
+        });
+        +p{
+          は差積で見たように交代式である。
+        }
+      >
+      +example ?:(`ex-discriminant`) ?:({判別式})<
+        +p{
+          ${\alpha_1, \cdots, \alpha_n}を根にもつ多項式
+          ${f = \paren{x-\alpha}\cdots \paren{x-\alpha_n}}
+          の判別式${D}を
+        }
+        +math (${
+          D = \prod_{1\leq i < j \leq n}\paren{\alpha_i-\alpha_j}^2 
+            = \app{\Delta}{\alpha_1, \cdots, \alpha_n}
+        });
+        +p{
+          で定義する。
+        }
+      >
+      +p{
+        判別式が${0}になるとき、またそのときのみ
+        ${\exists i,j \sqbracket{\alpha_i = \alpha_j}}、すなわち重根をもつことは自明である。
+      }
+      +p{
+        判別式が負であるとき、
+        ${\exists i,j \sqbracket{\paren{\alpha_i-\alpha_j}} \in \mathbb{C} }であるから、複素数解をもつ。
+      }
     >
     +subsection{Hilbertの基底定理} <
       +p{
@@ -461,12 +646,121 @@ document(|
   >
   +section{正規部分群と商群}<
     +subsection{正規部分群と商群} <
-      
+      +definition ?:(`def-conjugation`) ?:({共役})<
+        +p {
+          群${G}の元${g}と部分群${H}について、
+        }
+        +math (${
+          g^{-1}Hg := \setsep{g^{-1}hg}{h\in H}
+        });
+        +p{
+          を${H}の${x}による共役という。
+        }
+      >
+      +notation ?:(`nota-prod`) <
+        +p{
+          群${G}の部分集合${H, K}について
+        }
+        +math (${
+          HK := \setsep{hk}{h \in H \land k \in K}
+        });
+      >
+      +proposition ?:(`prop-sameresidueprod`)<
+        +p{
+          群${G}と部分群${H}について、${H}の任意の共役が${H}に等しい、すなわち
+          ${\forall g \in G \sqbracket{g^{-1}Hg = H}}であるとき、
+        }
+        +math (${
+          \forall g_1, g_2 \in G \sqbracket{
+            \forall a_1 \in g_1H \forall a_2 \in g_2H \sqbracket{
+              \paren{a_1a_2} H = \paren{g_1g_2} H
+            }
+          }
+        });
+      >
+      +proof<
+        +prp{
+          ${\exists h_1 \in H \sqbracket{ a_1 = g_1h_1 } }、${a_2}も同様であるから、
+        }
+        +align[
+          [${\paren{a_1a_2} H}; ${= \paren{g_1h_1g_2h_2} H};];
+          [${}; ${= \paren{g_1h_1g_2} H}; ${H\text!{は群であるから、}h_2H = H};];
+          [${}; ${= \paren{g_1h_1g_2g_2^{-1}h_2g_2} H}; ${g_2^{-1}Hg_2 = H\text!{より}g_2^{-1}h_2g_2H =H}];
+          [${}; ${= \paren{g_1h_1h_2g_2} H}; ${}];
+          [${}; ${= \paren{g_1h_1h_2g_2g_2^{-1}} H g_2}; ${g_2^{-1}Hg_2 = H}];
+          [${}; ${= \paren{g_1h_1h_2} H g_2}; ${}];
+          [${}; ${= \paren{g_1} H g_2}; ${}];
+          [${}; ${= \paren{g_1g_2} H}; ${g_2^{-1}Hg_2 = H}];
+        ];
+      >
+      +p{
+        群${G}の元${g_1, g_2}と部分群${H}について、以下のような剰余群の2項演算が定まる。
+      }
+      +math (${
+        g_1H g_2H := \paren{g_1 g_2}H
+      });
+      +p{
+        命題\ref(`prop-sameresidueprod`);から代表元に関してこの積は一意であるから、剰余類同士の演算として定められる。
+      }
+      +proposition<
+        +p{
+          群${G}とその部分群${H}について、以下の命題はすべて互いに同値である。
+        }
+        +align[
+          [${\text!{(1)}}; ${\forall g \in G \sqbracket{ g^{-1}Hg \subset H } };];
+          [${\text!{(2)}}; ${\forall g \in G \sqbracket{ g^{-1}Hg \supset H } };];
+          [${\text!{(3)}}; ${\forall g \in G \sqbracket{ g^{-1}Hg = H } };];
+        ];
+      >
+      +proof<
+        +prp{
+          (1) ${\rightarrow} (2) を示す。
+          (1)を仮定する。
+          任意の${g \in G}と${h \in H} について、(1)から${g^{-1}hg \in H}。すなわち、${\exists h' \sqbracket{h' = g^{-1}hg}}。
+        }
+        +prp{
+          そのような${h'}について、${h = gh'g^{-1} = \paren{g^{-1}}^{-1}h'g^{-1}}
+        }
+        +prp{
+          すべての元は逆元をもつため、以上より
+          ${\forall g \in G \forall h \in H \sqbracket{ \exists h' \in H \sqbracket{ h = g^{-1}h'g } }}。
+          すなわち、${\forall g \in G \sqbracket{ g^{-1}Hg \supset H }}を得る。
+        }
+        +prp{
+          (1) ${\leftarrow} (2)を示す。
+
+        }
+      >
+      +p{
+        上でみたように、これらの条件によって、剰余類の間に演算を定義できる。剰余類の集合(すなわち分割)とこの演算は自明に群を成す。
+      }
+      +definition ?:(`def-quotient`) ?:({商群、剰余群})<
+        +p{
+          群${G}の部分群${H}による剰余類の集合${G/H}と、2項演算
+        }
+        +math (${
+          \circ : G/H \times G/H \rightarrow G/H \; g_1H \circ g_2H \mapsto \paren{g_1g_2}H
+        });
+        +p{
+          の成す群を商群、または剰余群という。
+        }
+      >
+      +definition ?:(`def-normal`) ?:({正規部分群})<
+        +p{
+          群${G}の部分群${H}が、
+          ${\forall g \in G \forall h \in H \sqbracket{
+            g^{-1}hg \in H
+          }}を満たすとき、${H}を正規部分群といい、${G \triangleright H}とかく。
+        }
+      >
     >
     +subsection{準同型定理} <
       
     >
-    +subsection{次元定理} <
+    +subsection{第一同型定理} <
+      
+    >
+    +subsection{第二同型定理} <
       
     >
     +subsection{指標} <
