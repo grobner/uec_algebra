@@ -849,6 +849,70 @@ document(|
           の成す群を商群、または剰余群という。
         }
       >
+      +p {
+        商群の積の定義から、群${G}の元${g}を${g}を含む剰余類に写す自然な写像
+        ${\pi : G \rightarrow G/H}は全射かつ準同型である。
+      }
+      +align[
+        [
+          ${\app{\pi}{g_1 g_2}};
+          ${= \paren{g_1 g_2}H};
+        ];
+        [
+          ${};
+          ${= g_1Hg_2H};
+        ];
+        [
+          ${};
+          ${= \app{\pi}{g_1}\app{\pi}{g_2}};
+        ];
+      ];
+      +math (${
+        \proven!(
+          open DeriveDSL in
+          derive ${g \in G \land A = gH}
+          |>from[
+            derive ${\exists g \in G \sqbracket{A = gH}}
+            |> from[
+              assume ${A \in G/H};
+            ];
+          ]
+        )
+      });
+      +p {
+        雑導出木なので断りなく使っていたが、存在量化子からの演繹で現れる記号は存在量化子のかかる論理式を満たすような対象を指している。ここでは${g}を${g \in G \land A =gH}を満たす対象を指す記号として使っている。
+      }
+      +math (${
+        \proven!(
+          open DeriveDSL in
+          derive ${\forall A \in G/H \sqbracket{\exists g \sqbracket{
+            \app{\pi}{g} = A
+          }}}
+          |> by {\<${A}\>}
+          |> from[
+            derive ${A \in G/H \Rightarrow \exists g \sqbracket{\app{\pi}{g}=A}}
+            |> from[
+              derive ${\exists g \sqbracket{\app{\pi}{g} = A}}
+              |> from[
+                derive ${\app{\pi}{g} = A}
+                |> from[
+                  derive ${\app{\pi}{g} = gH}
+                  |> from[
+                    derive ${g \in G}
+                    |> from[
+                      assume ${g \in G \land A = gH};
+                    ];
+                  ];
+                  derive ${gH = A}
+                  |> from[
+                    assume ${g \in G \land A = gH};
+                  ];
+                ];
+              ];
+            ];
+          ]
+        )
+      });
       +definition ?:(`def-normal`) ?:({正規部分群})<
         +p{
           群${G}の部分群${H}が、
@@ -947,17 +1011,104 @@ document(|
            G \triangleright \ker \phi
         });
         +p {
-          また、${\phi}が\emph{全射}であれば
+          また、
         }
         +math (${
           G/\ker \phi \cong \im \phi
         });
         +p {
-          かつ、
+          さらに、${G}が有限群であるならば
         }
         +math (${
           \abs{G}/\abs{\ker \phi} = \abs{\im \phi}
         });
+      >
+      +proof<
+        +prp{
+          ${\ker \phi}の元${x}について、
+        }
+        +align[
+          [
+            ${\app{\phi}{g^{-1}xg}};
+            ${= \app{\phi}{g}^{-1}\app{\phi}{x}\app{\phi}{g}};
+            ${\phi\text!{は準同型}};
+          ];
+          [
+            ${};
+            ${= \app{\phi}{g}^{-1}e_H\app{\phi}{g}};
+            ${x\text!{は}\phi\text!{によって単位元に写る}};
+          ];
+          [
+            ${};
+            ${= \app{\phi}{g}^{-1}\app{\phi}{g}};
+          ];
+          [
+            ${};
+            ${= e_H};
+          ];
+        ];
+        +prp{
+          よって、${g^{-1}\ker \phi g = \ker \phi}。
+        }
+        +prp{
+          ここで、${\ker \phi}による任意の剰余類について、その任意の元の${\phi}の写す先は一致する。すなわち、
+        }
+        +math (${
+          \forall A \in G/\ker \phi \sqbracket{\forall x, y \in A \sqbracket{
+            \app{\phi}{x} = \app{\phi}{y}
+          }}
+        });
+        +prp{
+          これは、${A \in G/\ker \phi}は${g\ker \phi}より像は
+          ${\phi \brace{g\ker \phi} = \brace{\app{\phi}{g}}}となることから示すことができる。
+        }
+        +prp{
+          つまり、${\ker \phi}による剰余類においては${\phi}の写す先は一意である。
+          よって、${G/\ker \phi}の元からその代表元(なんでもよい)の${\phi}による行き先を対応付けると、これは写像(一意対応)となる。
+          \footnote{写像よりも緩いものに対応がある。これは多対多の結びつけを許すもので、集合論で言えば冪集合そのものである。グラフの辺もこれで表される。対応が写像である条件は、任意のfirst要素について、対応づけされているsecond要素が一意であることで、これを一意対応という。}
+        }
+        +prp{
+          そのような写像${\psi : G/\ker \phi \rightarrow \im \phi}は明らかに全射であり、${\phi}が準同型であることから、これも準同型である。
+        }
+        +prp{
+          任意の剰余類${A,B}について、${\app{\psi}{A} = \app{\psi}{B}}であるとする。${A = g_1\ker \phi, B = g_2\ker \phi}である${g_1, g_2}が存在するから、${\app{\phi}{g_1} = \app{\phi}{g_2}}。
+        }
+        +align[
+          [
+            ${\app{\phi}{g_1}};
+            ${= \app{\phi}{g_2}};
+          ];
+          [
+            ${\app{\phi}{g_2}^{-1}\app{\phi}{g_1}};
+            ${= e_H};
+          ];
+          [
+            ${\app{\phi}{g_2^{-1}g_1}};
+            ${= e_H};
+          ];
+        ];
+        +prp{
+          より${g_2^{-1}g_1 \in \ker \phi}であるから、${g_1 = g_2h}となる${h \in \ker \phi}が存在する。${h\ker \phi = \ker \phi}より、${g_1\ker \phi = g_2 \ker \phi}つまり、${A = B}。よって、${\psi}は単射である。
+        }
+        +prp{
+          以上より、${\psi:G/\ker \phi \rightarrow \im \phi}は全単射で準同型であるから、同型である。よって
+        }
+        +math (${
+          G/\ker \phi \cong \im \phi
+        });
+        +prp{
+          ${G}が有限群であるとき、全単射の存在から${\abs{G/\ker \phi} = \abs{\im \phi}}。
+        }
+        +prp{
+          Lagrangeの定理(定理\ref(`theorem-lagrange`);)より、
+          ${\abs{G/\ker \phi} = \abs{G}/\abs{\ker \phi}}であるから
+        }
+        +math (${
+          \abs{G}/\abs{\ker \phi} = \abs{\im \phi}
+        });
+        +prp{
+
+        }
       >
     >
     +subsection{第二同型定理} <
