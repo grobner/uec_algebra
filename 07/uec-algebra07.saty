@@ -122,7 +122,7 @@ open Derive in
 document(|
   title = {UEC 代数勉強会 第7回};
   author = {9trap/隕石};
-  date = {2021/06/22};
+  date = {2021/06/30};
   show-title = true;
   show-toc = true;
 |) '<
@@ -232,6 +232,38 @@ document(|
         +math (
           ${\forall x,y \in G \sqbracket{ \app{\phi}{x} \app{\phi}{y} = \app{\phi}{xy} }}
         );
+      >
+      +definition?:(`def-isomorphism`) ?:({同型写像})<
+        +p{
+          準同型写像${\phi: G \rightarrow H}が全単射であるとき、同型写像であるといい、このように群${G}と群${H}のあいだに同型が存在するとき${G \cong H}とかき、単に${G}と${H}は同型であるという。
+        }
+      >
+      +proposition<
+        +p{
+          同型写像${\phi}の逆射も同型写像(準同型写像)である。
+        }
+        +proof<
+          +prp{
+            雑な証明を示す。
+          }
+          +align[
+            [
+              ${\app{\phi}{\app{\phi^{-1}}{xy}}};
+              ${= xy};
+            ];
+            [
+              ${\app{\phi}{\app{\phi^{-1}}{xy}}};
+              ${= \app{\phi}{\app{\phi^{-1}}{x}} \app{\phi}{\app{\phi^{-1}}{y}}};
+            ];
+            [
+              ${\app{\phi^{-1}}{xy}};
+              ${= \app{\phi^{-1}}{x} \app{\phi^{-1}}{y}};
+            ];
+          ];
+          +prp{
+            
+          }
+        >
       >
     >
     +subsection{置換表現}<
@@ -1003,7 +1035,7 @@ document(|
       
     >
     +subsection{第一同型定理(準同型定理)} <
-      +theorem ?:(`theorem-isomorphism`) ?:({第一同系定理(準同型定理)})<
+      +theorem ?:(`theorem-homomorphism`) ?:({第一同系定理(準同型定理)})<
         +p {
           群${G}から群${H}への写像${\phi:G \rightarrow H}が準同型であるとき、${\phi}の核は${G}の正規部分群である。つまり、
         }
