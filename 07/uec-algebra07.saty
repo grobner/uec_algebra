@@ -4,12 +4,26 @@
 @require: color
 @require: base/length
 @require: annot
+@require: math
+@require: base/typeset/satysfi-it
 @require: derive/derive
 @require: matrix
 
+let-math \ker = math-char MathOp `Ker`
+let-math \im = math-char MathOp `Im`
 let-math \sgn = math-char MathOp `sgn`
 let-math \emptyset = math-char MathOrd `∅`
 let-math \notin = math-char MathOrd `∉`
+
+let-inline ctx \emph inner =
+  let set-cjk-font font ctx =
+    ctx |> set-font HanIdeographic font
+        |> set-font Kana           font in
+  let ctx =
+      ctx |> set-font Latin (`lmsans`, 1., 0.)
+          |> set-cjk-font (`ipaexg`, 0.88, 0.)
+    in
+      read-inline ctx inner
 
 let-mutable problem-counter <- 0
 let-block ctx +problem = JLReqTheorem.theorem-scheme (|JLReqTheorem.default-config-theorem with
@@ -101,8 +115,9 @@ let-block ctx +prp it =
       else inline-nil
     ) in
   line-break true true ctx bb
-
 in
+
+open Derive in
 
 document(|
   title = {UEC 代数勉強会 第7回};
@@ -115,6 +130,9 @@ document(|
     +subsection{はじめに} <
       +p{
         だいぶ間が空いたので復習を入れておきます。
+      }
+      +p{
+        金子晃「応用代数講義」ISBN4-7819-1117-Xを使います。
       }
     >
     +subsection{代数系}<
@@ -470,7 +488,7 @@ document(|
       >
       +problem<
         +p{
-          ${x_1^{4} + \cdots + x_n^{4}}を基本対称式の多項式で表せ。
+          ${x_1^{4} + \cdots + x_n^{4}}を基本対称式の多項式で表せ(参考書問3.9)。
         }
         +p{
           ${x_1^{4}}を最大の単項式として含む基本対称式による単項式は${s_1^{4}}。
@@ -714,22 +732,108 @@ document(|
       >
       +proof<
         +prp{
-          (1) ${\rightarrow} (2) を示す。
+          (1) ${\Rightarrow} (2) を示す。
+        }
+        +prp{
           (1)を仮定する。
-          任意の${g \in G}と${h \in H} について、(1)から${g^{-1}hg \in H}。すなわち、${\exists h' \sqbracket{h' = g^{-1}hg}}。
+          任意の${g \in G}と${h \in H} について、(1)から${g^{-1}hg \in H}。すなわち、${\exists h' \in H \sqbracket{h' = g^{-1}hg}}。
         }
         +prp{
           そのような${h'}について、${h = gh'g^{-1} = \paren{g^{-1}}^{-1}h'g^{-1}}
         }
         +prp{
           すべての元は逆元をもつため、以上より
-          ${\forall g \in G \forall h \in H \sqbracket{ \exists h' \in H \sqbracket{ h = g^{-1}h'g } }}。
+        }
+        +math (${
+          \forall g \in G \forall h \in H \sqbracket{ 
+            \exists h' \in H \sqbracket{ h = g^{-1}h'g } 
+          }
+        });
+        +prp{
           すなわち、${\forall g \in G \sqbracket{ g^{-1}Hg \supset H }}を得る。
         }
         +prp{
-          (1) ${\leftarrow} (2)を示す。
-
+          (1) ${\Leftarrow} (2)を示す。
+          雑な導出木を示しておきます。
         }
+        +math (${
+          \proven!(
+            open DeriveDSL in
+            derive ${(1) \Leftarrow (2)}
+            |> by {仮定(1)の除去}
+            |> from[
+              derive ${(2)}
+              |> by {(2)の定義}
+              |> from[
+                derive ${\forall g \in G \sqbracket{g^{-1}Hg \supset H}}
+                |> from[
+                  derive ${\forall g \sqbracket{ g \in G \Rightarrow g^{-1}Hg \supset H } }
+                  |> by{\<${g}\>}
+                  |> from[
+                    derive ${g \in G \Rightarrow g^{-1}Hg \supset H}
+                    |> by{仮定の除去}
+                    |> from[
+                      derive ${g^{-1}Hg \supset H}
+                      |> by {${\supset}の定義}
+                      |> from[
+                        derive ${\forall h \sqbracket{ h \in H \Rightarrow h \in g^{-1}Hg}}
+                        |> by {\<${h}\>}
+                        |> from[
+                          derive ${h \in H \Rightarrow h \in g^{-1}Hg}
+                          |> by {仮定の除去}
+                          |> from[
+                            derive ${h \in g^{-1}Hg}
+                            |> from[
+                              derive ${\exists a \in H \sqbracket{ h = g^{-1}ag }}
+                              |> from[
+                                derive ${ h = g^{-1}h'^{-1}g }
+                                |> from[
+                                  derive ${ghg^{-1} = h'^{-1}}
+                                  |> from[
+                                    derive ${g^{-1}hg = h'}
+                                    |> from[
+                                      derive ${\exists h' \in H \sqbracket{
+                                        g^{-1}hg = h'
+                                      }}
+                                      |> from[
+                                        derive ${h \in g^{-1}Hg}
+                                        |> from[
+                                          assume ${h \in H};
+                                          derive ${h \in H \Rightarrow h \in g^{-1}Hg}
+                                          |> from[
+                                            derive ${\forall h \sqbracket{
+                                              h \in H \Rightarrow h \in g^{-1}Hg
+                                            }}
+                                            |> by {\<${h}\>}
+                                            |> from[
+                                              derive ${g^{-1}Hg \supset H}
+                                              |> from[
+                                                derive ${\forall g \sqbracket{
+                                                  g^{-1}Hg \supset H
+                                                }}
+                                                |>from[
+                                                  assume ${\text!{(2)}}
+                                                ];
+                                              ];
+                                            ];
+                                          ];
+                                        ]
+                                      ];
+                                    ];
+                                  ];
+                                ];
+                              ];
+                            ];
+                          ];
+                        ];
+                      ];
+                    ];
+                  ];
+                ];
+              ];
+            ]
+          )
+        });
       >
       +p{
         上でみたように、これらの条件によって、剰余類の間に演算を定義できる。剰余類の集合(すなわち分割)とこの演算は自明に群を成す。
@@ -753,12 +857,108 @@ document(|
           }}を満たすとき、${H}を正規部分群といい、${G \triangleright H}とかく。
         }
       >
-    >
-    +subsection{準同型定理} <
+      +p {
+        正規部分群の条件が${\forall g \in G \sqbracket{gH = Hg}}と同値であることは自明だが、このことから正規部分群とは、左右の剰余類が一致する部分群と言い換えることができる。
+      }
+      +definition ?:(`def-automorphism`) ?:({内部自己同型})<
+        +p{
+          群${G}から${G}への写像${\phi_g:G \rightarrow G \; h \mapsto g^{-1}hg}
+          は自明に同型であるが、これを${G}の内部自己同型という。
+        }
+      >
+      +p {
+        実は共役${g^{-1}Hg}は部分群${H}の内部自己同型による像であったことがわかる。
+      }
+      +proposition<
+        +p {
+          群${G}の元${g}による部分群${H}の共役${g^{-1}Hg}は${G}の部分群である。
+        }
+        +proof<
+          +prp{
+            群の定義から${g^{-1}Hg}が${G}の部分集合であることは自明。
+          }
+          +prp{
+            ${H}は単位元を含むため、${g^{-1}Hg}も単位元を含む。
+          }
+          +prp{
+            ${H}は部分群であるから${h^{-1}}は${H}の元であり、同様に${g^{-1}}も${G}の元であるから、${g^{-1}hg}の逆元${ghg^{-1}=\paren{g^{-1}}^{-1}hg^{-1}}も${g^{-1}Hg}の元である。
+          }
+          +prp{
+            ${g^{-1}Hg}の任意の元${g_1, g_2}について、それぞれ${g_1 = g^{-1}h_1g}、${g_2 = g^{-1}h_2g}となる${H}の元${h_1, h_2}が存在する。このとき、
+          }
+          +math (${
+            g_1g_2 = g^{-1}h_1gg^{-1}h_2g = g^{-1}h_1h_2g \in g^{-1}Hg
+          });
+          +prp{
+            よって、演算について閉じているため${g^{-1}Hg}は${G}の部分群。
+          }
+        >
+      >
+      +lemma<
+        +p{
+          群${G}の正規部分群${H}と部分群${G_1}の共通部分${H \cap G_1}は${G_1}の正規部分群である。
+        }
+        +proof<
+          +prp{
+            ${H \cap G_1}の元${x}について、${x \in H}であるから、${G_1 \subset G}より${\forall g \in G_1 \sqbracket{g^{-1}xg \in H}}。
+          }
+          +prp{
+            ${x \in G_1}でもあるから、${\forall g \in G_1 \sqbracket{g^{-1}xg \in G_1}}。
+          }
+          +prp{
+            よって、${\forall x \in H \cap G_1 \sqbracket{\forall g \in G_1 \sqbracket{g^{-1}xg \in H \cap G_1}}}。
+          }
+        >
+      >
+      +p {
+        これによって参考書問4.1は解かれた。
+      }
+      +problem<
+        +p{
+          群${G}が集合${X}に推移的に作用しているとき、${X}の任意の点${x,y}の固定群${G_x, G_y}は互いに共役となることを示せ(参考書問4.2)。
+        }
+        +p {
+          推移的に作用している、とは作用の対象となる集合${X}の任意の元${x}の軌道${Gx = \setsep{gx}{g\in G}}が${X}に一致することを指す。
+        }
+        +p {
+          ${G_x}が${x}の固定群であるというのは、${G_xx=\brace{x}}のことである。
+        }
+        +p {
+          ${x,y}を入れ替えるような${X}の変換に対応する${G}の要素を${a}とする。
+          すなわち、
+        }
+        +math (${\forall p \in X \sqbracket{
+            \paren{p \neq x \land p \neq y \Rightarrow ap = p} \land
+            \paren{p = x \Rightarrow ap = y} \land
+            \paren{p = y \Rightarrow ap = x}
+        }});
+        +p {
+          このとき、${a^{-1}G_xa = G_y}かつ${a^{-1}G_ya = G_x}となるから、${G_x}と${G_y}は${a}によって互いに共役。
+        }
+      >
       
     >
-    +subsection{第一同型定理} <
-      
+    +subsection{第一同型定理(準同型定理)} <
+      +theorem ?:(`theorem-isomorphism`) ?:({第一同系定理(準同型定理)})<
+        +p {
+          群${G}から群${H}への写像${\phi:G \rightarrow H}が準同型であるとき、${\phi}の核は${G}の正規部分群である。つまり、
+        }
+        +math (${
+           G \triangleright \ker \phi
+        });
+        +p {
+          また、${\phi}が\emph{全射}であれば
+        }
+        +math (${
+          G/\ker \phi \cong \im \phi
+        });
+        +p {
+          かつ、
+        }
+        +math (${
+          \abs{G}/\abs{\ker \phi} = \abs{\im \phi}
+        });
+      >
     >
     +subsection{第二同型定理} <
       
