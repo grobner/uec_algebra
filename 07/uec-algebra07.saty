@@ -1399,8 +1399,92 @@ document(|
         >
       >
     >
+    +subsection{第三同型定理} <
+      +p {
+        群${G}と正規部分群${N}について、
+      }
+      +p {
+        (1) 任意の${G/N}の部分群${S}について、${S=K/N}を満たし、${N \subset K \subset G}を満たすような${G}の部分群${K}が存在する。
+      }
+      +p {
+        (2) 任意の${G/N}の正規部分群${S}について、${S=K/N}を満たし、${N \subset K \subset G}を満たすような${G}の正規部分群${K}が存在する。
+      }
+      +p {
+        (3) ${N \subset K \subset G}を満たすような${G}の正規部分群${K}について、
+        ${\paren{G/N}/\paren{K/N} \cong G/K}が成り立つ。
+      }
+      +proof<
+        +prp{
+          雑証明をする。
+        }
+        +prp{
+          (1),(2) ${K = G - \bigcup\paren{G/N - S}}とすればよい。
+        }
+        +prp{
+          (3) 写像${\phi : G/N \rightarrow G/K}を考えれば第一同型定理から示すことができる。
+        }
+      >
+    >
+    +subsection{第四同型定理} <
+      +p {
+        対応定理(correspondence theorem)とか束定理(lattice theorem)とか言うらしい。
+        重いので今回はパス。
+      }
+    >
     +subsection{指標} <
-      
+      +definition ?:(`def-character`) ?:({指標})<
+        +p {
+          有限群${G}から非零複素数の成す乗法群${\mathbb{C}^{\times}}への準同型${\chi}を群${G}の指標という。
+        }
+      >
+      +problem ?:(`problem-4.5-1`) ?:({参考書問4.5(1)})<
+        +p {
+          ${\chi}の像は絶対値が${1}の複素数となることを示せ。
+        }
+        +p {
+          有限群の任意の元は位数が有限値であるから、${\forall x \in G \sqbracket{\exists n \sqbracket{\app{\chi}{x}^{n} = 1}}}となる。
+        }
+        +p {
+          ${1}の${n}乗根の絶対値は${1}であるから${\chi}の像は絶対値が${1}の複素数となる。
+        }
+      >
+      +definition ?:(`def-monocharacter`) ?:({単位指標})<
+        +p {
+          像が${\brace{1}}である指標を単位指標といい、${1}とかく。
+        }
+      >
+      +problem ?:(`problem-4.5-1`) ?:({参考書問4.5(2)})<
+        +p {
+          ${\sum_{g \in G}\app{\chi}{g}}が${\chi=1}のとき${\abs{G}}、そうでなければ${0}となることを示せ。
+        }
+        +p {
+          ${G}の任意の元${h}について、${hG = G}。
+          よって、${\chi \brace{G} = \chi \brace{hG}}であるから、
+        }
+        +align[
+          [
+            ${\sum_{g \in G}\app{\chi}{g}};
+            ${= \sum_{g \in G}\app{\chi}{hg}};
+          ];
+          [
+            ${\sum_{g \in G}\app{\chi}{g}};
+            ${= \sum_{g \in G}\app{\chi}{h}\app{\chi}{g}};
+          ];
+          [
+            ${\sum_{g \in G}\app{\chi}{g}};
+            ${= \app{\chi}{h}\paren{\sum_{g \in G}\app{\chi}{g}}};
+          ];
+        ];
+        +p {
+          上式が恒等的に成り立つため、${\chi \neq 1}ならば${\sum_{g \in G}\app{\chi}{g}=0}である。
+        }
+        +p {
+          一方、${\chi = 1}の場合は自明。
+        }
+      >
+      +p {
+        指標は表現論でたくさんでてくるっぽいので物理やるひとはこれから(もしくはすでに)出会うことになると思う。この自主ゼミでもあとで扱ってもいいかもしれない。
+      }
     >
   >
   +section{射影幾何について}<
