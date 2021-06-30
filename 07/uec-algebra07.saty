@@ -13,6 +13,7 @@ let-math \ker = math-char MathOp `Ker`
 let-math \im = math-char MathOp `Im`
 let-math \sgn = math-char MathOp `sgn`
 let-math \emptyset = math-char MathOrd `∅`
+let-math \zerovec = math-char MathOrd `𝟎`
 let-math \notin = math-char MathOrd `∉`
 
 let-inline ctx \emph inner =
@@ -1398,6 +1399,15 @@ document(|
           }
         >
       >
+      +p {
+        一般射影線形群と特殊射影線形群が同型であることがすぐ示せる(英語wikipediaから引いてきた情報で、確認してません)。
+      }
+      +math (${
+        \app{PGL}{2, \mathbb{C}}
+        := \app{GL}{2, \mathbb{C}}/\paren{\mathbb{C}^{\times}I}
+        \cong \app{SL}{2, \mathbb{C}}/\brace{\pm I}
+        =: \app{PSL}{2, \mathbb{C}}
+      });
     >
     +subsection{第三同型定理} <
       +p {
@@ -1488,5 +1498,125 @@ document(|
     >
   >
   +section{射影幾何について}<
+    +subsection{ことわり} <
+      +p {
+        持ってる本に射影幾何のことが少し書いてあったので載せときます。
+        J.H.シルヴァーマン/J.テイト 著、足立恒雄/木田雅成/小松啓一/田谷久雄　訳
+        「楕円曲線論入門」ISBN978-4-621-06453-5
+      }
+    >
+    +subsection{Fermat方程式との関連} <
+      +p {
+        Fermat方程式1
+      }
+      +math (${
+        x^N + y^N = 1
+      });
+      +p {
+        の有理数解を求める問題がある。
+      }
+      +p {
+        試しに有理数解を${\paren{a/c,b/d}}とする。ただし、どちらも既約分数で、分母が正であるとする。すると、
+      }
+      +math (${
+        a^Nd^N + b^Nc^N = c^Nd^N
+      });
+      +p {
+        より、${a^Nd^N}は${c}で割り切れることがわかる。しかし、${a/c}は既約分数であることから、${d^N}が${c}で割り切れる。
+      }
+      +p {
+        同様にして${c^N}が${d}で割り切れることがわかるので、分母が正であることから${c=d}。よって以下を得る。
+      }
+      +math (${
+        a^N+b^N=c^N
+      });
+      +p {
+        これにより${a,b,c}がFermat方程式2
+      }
+      +math (${
+        X^N+Y^N=Z^N
+      });
+      +p {
+        の整数解を与えることがわかる。
+        しかし、逆については、異なる整数解が同じFermat方程式1の有理数解を与えることもあれば、そもそもあるFermat方程式2の整数解はFermat方程式1の有理数解を導かない。
+      }
+      +p {
+        前者については、異なる2つの整数解が${(a,b,c)}と${(ta,tb,tc)}である場合に起きることであり、後者は${N}が奇数のときの整数解${(-1, 1, 0)}が${(\infty, \infty)}を導くことからわかる。
+      }
+      +p {
+        これらは同次座標と無限遠点に関連している。
+      }
+    >
+    +subsection{同次座標と射影平面} <
+      +p {
+        さて、上記のような要請から代数的に射影平面を定義することができる。
+      }
+      +definition ?:(`def-projectiveplane-alg`) ?:({代数的射影平面})<
+        +p {
+          射影平面${\mathbb{P}^2}を、数の集合${Z}と同値関係
+          ${(a,b,c) \sim (a',b',c') \Leftrightarrow 
+          \exists t \neq 0 \sqbracket{a=ta' \land b=tb' \land c=tc'}}
+          を用いて次のように定義する。
+        }
+        +math (${
+          \mathbb{P}^2 := \setsep{(a,b,c) \in Z^3}{(a,b,c) \neq \zerovec}/\sim
+        });
+      >
+      +p {
+        ${t}倍して一致する点を同じとみなすわけである。このとき、点${(a,b,c)}について${a,b,c}を同次座標という。
+      }
+      +p {
+        平面に限らず、射影空間を定義できる。
+      }
+      +definition ?:(`def-projectivespace-alg`) ?:({代数的射影空間})<
+        +p {
+          射影空間${\mathbb{P}^n}を、数の集合${Z}と同値関係
+          ${\bm{p} \sim \bm{p'} \Leftrightarrow 
+          \exists t \neq 0 \sqbracket{\bm{p} = t\bm{p'}}}
+          を用いて次のように定義する。
+        }
+        +math (${
+          \mathbb{P}^n := \setsep{\bm{a} \in Z^n}{\bm{a} \neq \zerovec}/\sim
+        });
+      >
+      +p {
+        このとき、${\mathbb{P}^2}における直線とは、定数${\alpha, \beta, \gamma}に対して${\alpha a+\beta b+\gamma c = 0}を満たす点の集合をいう。
+      }
+      +p {
+        幾何学的には、平面上の2点が与えられれば直線がただ1つに決まる。同じように、平行しない2直線はただ1つの点を共有する。しかし、平行でないという条件ははずしたほうが便利である。こういった動機から、すべての直線が通る特別な点をつけたすことにする。
+      }
+      +p {
+        この特別な点はただ1つでいいだろうか？
+        ためしに平行する2直線${L_1, L_2}が点${P}を通るとしよう。
+        また、平行する2直線${L'_1, L'_2}が点${P'}を通ることにして、さらに${L_1}とは平行でないとする。
+      }
+      +p {
+        このとき、${L_1}と${L'_1}は交点${Q = L_1 \cap L'_1}を共有する。しかし、2つの直線はただ1つの交点をもつはずだから${P \in L_1}と${P' \in L'_1}は異なる。
+      }
+      +p {
+        よって、特別な点は1つではすまないどころか、直線の方向の分だけ追加しなければならない。
+      }
+      +p {
+        こういった幾何学的動機から射影平面を定義すると、以下のようになる。
+      }
+      +definition ?:(`def-euclidplane-geo`) ?:({Euclid平面})<
+        +p {
+          通常のEuclid平面を次のように定義する。
+        }
+        +math (${
+          \mathbb{A}^2 = \setsep{(x,y)}{x,y\text!{は数}}
+        });
+      >
+      +definition ?:(`def-projectiveplane-geo`) ?:({射影平面})<
+        +p {
+          射影平面を次のように定義する。
+        }
+        +math (${
+          \mathbb{P}^2 = \mathbb{A}^2 \cup \brace{\mathbb{A}^2\text!{
+            における方向の集合
+          }}
+        });
+      >
+    >
   >
 >
