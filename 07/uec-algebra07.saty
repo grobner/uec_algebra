@@ -18,6 +18,20 @@ let-math \notin = math-char MathOrd `∉`
 let-math \mapsfrom = math-char MathOrd `↤`
 let-math \longmapsto = math-char MathOrd `⟼`
 let-math \longmapsfrom = math-char MathOrd `⟻`
+let-math \longrightarrow = math-char MathOrd `⟶`
+let-math \sblank = math-char MathOrd ` `
+let-math \blank = math-char MathOrd ` `
+
+let-rec nblank-impl n = 
+  let head = nblank-impl (n - 1) in
+  match n with
+    | 1 -> ${\blank}
+    | m -> ${#head \blank}
+  
+let-math \nblank n = nblank-impl n
+
+let-math \map from to = ${#from \blank \longmapsto \blank #to}
+let-math \mapset from to = ${#from \blank \longrightarrow \blank #to}
 
 let-inline ctx \emph inner =
   let set-cjk-font font ctx =
@@ -1507,6 +1521,9 @@ document(|
         J.H.シルヴァーマン/J.テイト 著、足立恒雄/木田雅成/小松啓一/田谷久雄　訳
         「楕円曲線論入門」ISBN978-4-621-06453-5
       }
+      +p {
+        自分なりに噛み砕いたりしましたが、ほとんどの内容が被り、写しに近い状態です。
+      }
     >
     +subsection{Fermat方程式との関連} <
       +p {
@@ -1658,20 +1675,20 @@ document(|
       }
       +align[
         [
-          ${\sqbracket{a, b, c}};
-          ${\longmapsto \paren{\frac{a}{c}, \frac{b}{c}} \in \mathbb{A} (c \neq 0)};
+          ${\sqbracket{a, b, c} \blank};
+          ${\longmapsto \blank \paren{\frac{a}{c}, \frac{b}{c}} \in \mathbb{A} (c \neq 0)};
         ];
         [
-          ${\sqbracket{a, b, 0}};
-          ${\longmapsto \sqbracket{a, b} \in \mathbb{P}};
+          ${\sqbracket{a, b, 0} \blank};
+          ${\longmapsto \blank \sqbracket{a, b} \in \mathbb{P}};
         ];
         [
-          ${\sqbracket{x, y, 1}};
-          ${\longmapsfrom (x,y) \in \mathbb{A}^2};
+          ${\sqbracket{x, y, 1} \blank};
+          ${\longmapsfrom \blank (x,y) \in \mathbb{A}^2};
         ];
         [
-          ${\sqbracket{A, B, 0}};
-          ${\longmapsfrom \sqbracket{A,B} \in \mathbb{P}};
+          ${\sqbracket{A, B, 0} \blank};
+          ${\longmapsfrom \blank \sqbracket{A,B} \in \mathbb{P}};
         ];
       ];
       +p {
@@ -1681,18 +1698,17 @@ document(|
         たとえば、${c \neq 0}ならば
       }
       +math (${
-        \sqbracket{a, b, c}
-        \longmapsto \paren{\frac{a}{c}, \frac{b}{c}}
-        \longmapsto \sqbracket{\frac{a}{c}, \frac{b}{c}, 1}
+
+        \map{\sqbracket{a, b, c}}{\paren{\frac{a}{c}, \frac{b}{c}}}
+        \blank \longmapsto \blank \sqbracket{\frac{a}{c}, \frac{b}{c}, 1}
         = \sqbracket{a, b, c}
       });
       +p {
         ${c = 0}ならば
       }
       +math (${
-        \sqbracket{a, b, 0}
-        \longmapsto \sqbracket{a, b}
-        \longmapsto \sqbracket{a, b, 0}
+        \map{\sqbracket{a, b, 0}}{\sqbracket{a, b}}
+        \blank \longmapsto \blank \sqbracket{a, b, 0}
       });
       +p {
         要素が一対一に対応することはわかったが、幾何的な構造を保持するのだろうか。
@@ -1720,6 +1736,110 @@ document(|
       }
       +p {
         このように、代数的な定義も幾何的な定義も矛盾なく同一視できる。
+      }
+    >
+    +subsection{射影平面上の曲線} <
+      +definition ?:(`def-algcurve`) ?:({代数曲線})<
+        +p {
+          アフィン平面${\mathbb{A}^2}内において、方程式
+        }
+        +math (${
+          \app{f}{x, y} = 0
+        });
+        +p {
+          で表される曲線を代数曲線という。
+        }
+      >
+      +p {
+        しかし、射影平面${\mathbb{P}^2}で曲線を定義しようとすると、同時座標は変数が3つあるから3変数の式を立てなくていけなくなる。さらに、同次座標は同じとみなさなければならない。そこで、
+      }
+      +math (${
+        \forall t \sqbracket{
+          \app{F}{a, b, c} = 0 \Rightarrow \app{F}{ta, tb, tc} = 0
+        }
+      });
+      +p {
+        となる${\app{F}{a, b, c}}に注目すると、これは同次多項式となる。つまり、
+      }
+      +math (${
+        \app{F}{ta, tb, tc} = t^d\app{F}{a, b, c}
+      });
+      +p {
+        もしくは、${F}は次数が${d}の項の一次結合で表される(これらは同値)。
+      }
+      +p {
+        このような方程式で表される解の集合を${\mathbb{P}^2}における曲線${C}と定義する。
+      }
+      +math (${
+        C : \app{F}{X, Y, Z} = 0
+      });
+      +p {
+        この曲線を幾何的に見てみよう。
+      }
+      +p {
+        ${\app{F}{a,b,c}}は同次式だから
+      }
+      +math (${
+        \frac{1}{c^d}\app{F}{\frac{a}{c}, \frac{b}{c}, 1}
+        = \app{F}{a, b, c}
+        = 0
+      });
+      +p {
+        ここで、${\app{f}{x, y} := \app{F}{\frac{a}{c}, \frac{b}{c}, 1}}と定義すると以下のように曲線${C : \app{F}{a, b, c}}上の点を${\mathbb{A}^2 \cup \mathbb{P}}に対応させることを考える。${c \neq 0}とすると、
+      }
+      +align[
+        [
+          ${\setsep{\sqbracket{a, b, c} \in C}{c \neq 0}};
+          ${\blank \longrightarrow \blank \setsep{(x, y) \in \mathbb{A}^2}{\app{f}{x, y} = 0}};
+        ];
+        [
+          ${\sqbracket{a, b, c}};
+          ${\blank \longmapsto \blank \paren{\frac{a}{c}, \frac{b}{c}}};
+        ];
+      ];
+      +p {
+        この写像が全単射であることはすぐに確かめられる。この${\mathbb{A}^2}の曲線${\app{f}{x, y} = 0}を射影曲線${C}のアフィン部分という。
+      }
+      +p {
+        ${c = 0}の点は無限遠点、つまり方向に写される。実際、この方向は曲線上で無限遠に極限をとったときの接戦の傾きに一致する。
+      }
+      +p {
+        射影幾何の勉強化ではないのでこのくらいにしておきます。
+      }
+    >
+    +subsection{射影幾何の資料} <
+      +p{
+        時間がなくて紹介したり読み切ったりできなかったんですが、面白そうです。
+        ということでリンクだけ丸投げします。
+      }
+      +p {
+        \href(`http://www.math.aoyama.ac.jp/~kyo/Slides/handout_GakumonNyumonKouza_2011.pdf`){学問入門講座 射影の幾何学 西山享}
+      }
+      +p {
+        \href(`https://www.kurims.kyoto-u.ac.jp/~kenkyubu/kokai-koza/H30-mukai.pdf`){代数幾何の源流を求めて 向井茂}
+      }
+      +p {
+        \href(`http://echo-lab.ddo.jp/Libraries/佛教大学/仏教学部論集/95号(20110301)/佛教大学仏教学部論集 95号(20110301) 001田山令史「射影幾何学とカント空間」.pdf`){射影幾何学とカント空間 田山令史}
+      }
+      +p {
+        \href(`http://www.math.sci.hokudai.ac.jp/~yoshinaga/articles/fibonacci.pdf`){フィボナッチと射影幾何 吉永正彦}
+      }
+      +p {
+        \href(`https://www.asj.or.jp/geppou/archive_open/old_1993_2002/1999/pdf/19991002.pdf`){2体問題の解析的解法を264年ぶりに発見してレファレンスのない論文を書いた! 佐藤勲}
+      }
+      +p {
+        \href(`https://www.kaijo.ed.jp/wp-content/uploads/2016/02/2013summer-4.pdf`){2013年度数学科リレー講座４日目 ～非ユークリッド幾何学の例2～ ～射影幾何学～  原 崇泰・平山 裕之}
+      }
+      +p {
+        \href(`https://core.ac.uk/download/pdf/144253984.pdf`){修士論文 
+        射影平面における円錐曲線の性質について 高校数学における古典的教材の視点から 金濱千明}
+      }
+      +p {
+        \href(`http://aozoragakuen.sakura.ne.jp/PDF/pascal.pdf`){幾何学の精神 青空学園数学科}
+      }
+      +p {
+        \href(`https://www.ms.u-tokyo.ac.jp/video/open/2019highschool-math/op2019-003.pdf`){高校生のための現代数学講座 「いろいろな幾何学」講義(3)
+        坂井 秀隆　「作図と演算」}
       }
     >
   >
