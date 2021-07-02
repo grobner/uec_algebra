@@ -1,0 +1,1846 @@
+% https://github.com/abenori/satysfi-class-jlreq.git
+@require: class-jlreq/jlreq
+@require: class-jlreq/theorem
+@require: color
+@require: base/length
+@require: annot
+@require: math
+@require: base/typeset/satysfi-it
+@require: derive/derive
+@require: matrix
+
+let-math \ker = math-char MathOp `Ker`
+let-math \im = math-char MathOp `Im`
+let-math \sgn = math-char MathOp `sgn`
+let-math \emptyset = math-char MathOrd `∅`
+let-math \zerovec = math-char MathOrd `𝟎`
+let-math \notin = math-char MathOrd `∉`
+let-math \mapsfrom = math-char MathOrd `↤`
+let-math \longmapsto = math-char MathOrd `⟼`
+let-math \longmapsfrom = math-char MathOrd `⟻`
+let-math \longrightarrow = math-char MathOrd `⟶`
+let-math \sblank = math-char MathOrd ` `
+let-math \blank = math-char MathOrd ` `
+
+let-rec nblank-impl n = 
+  let head = nblank-impl (n - 1) in
+  match n with
+    | 1 -> ${\blank}
+    | m -> ${#head \blank}
+  
+let-math \nblank n = nblank-impl n
+
+let-math \map from to = ${#from \blank \longmapsto \blank #to}
+let-math \mapset from to = ${#from \blank \longrightarrow \blank #to}
+
+let-inline ctx \emph inner =
+  let set-cjk-font font ctx =
+    ctx |> set-font HanIdeographic font
+        |> set-font Kana           font in
+  let ctx =
+      ctx |> set-font Latin (`lmsans`, 1., 0.)
+          |> set-cjk-font (`ipaexg`, 0.88, 0.)
+    in
+      read-inline ctx inner
+
+let-mutable problem-counter <- 0
+let-block ctx +problem = JLReqTheorem.theorem-scheme (|JLReqTheorem.default-config-theorem with
+  font = [italic]; 
+|) {問} problem-counter ctx
+
+let-mutable theorem-counter <- 0
+let-block ctx +theorem = JLReqTheorem.theorem-scheme (|JLReqTheorem.default-config-theorem with
+  font = [italic]; 
+|) {定理} theorem-counter ctx
+
+let-block ctx +definition = JLReqTheorem.theorem-scheme (|JLReqTheorem.default-config-theorem with
+  font = [italic]; 
+|) {定義} theorem-counter ctx
+
+let-block ctx +notation = JLReqTheorem.theorem-scheme (|JLReqTheorem.default-config-theorem with
+  font = [italic]; 
+|) {記法} theorem-counter ctx
+
+let-block ctx +example = JLReqTheorem.theorem-scheme (|JLReqTheorem.default-config-theorem with
+  font = [italic]; 
+|) {例} theorem-counter ctx
+
+let-block ctx +lemma = JLReqTheorem.theorem-scheme (|JLReqTheorem.default-config-theorem with
+  font = [italic]; 
+|) {補題} theorem-counter ctx
+
+let-block ctx +corollary = JLReqTheorem.theorem-scheme (|JLReqTheorem.default-config-theorem with
+  font = [italic]; 
+|) {系} theorem-counter ctx
+
+let-block ctx +proposition = JLReqTheorem.theorem-scheme (|JLReqTheorem.default-config-theorem with
+  font = [italic]; 
+|) {命題} theorem-counter ctx
+
+let-mutable proof-counter <- 0
+let-mutable number-of-paragraph-in-proof <- -1
+let-mutable paragraph-counter <- 0
+
+let-block ctx +proof inner =
+  let () = proof-counter <- !proof-counter + 1 in
+  let ref-key = `number-of-paragraph-in-proof` ^ (arabic !proof-counter) in
+  let ib = (read-inline ctx {証明}) ++ (inline-skip 10pt) in
+  let () = JLReqParagraph.set-paragraph-top-text ib in
+  let () = number-of-paragraph-in-proof <- (
+    match get-cross-reference ref-key with
+      | None -> 1
+      | Some(s) -> (match Int.of-string-opt s with
+        | None -> 1
+        | Some(n) -> n
+      )
+    ) in
+  let () = paragraph-counter <- 0 in
+  let bb = (read-block ctx inner) in
+  let () = register-cross-reference ref-key (arabic !paragraph-counter) in
+  let () = number-of-paragraph-in-proof <- -1 in
+bb
+
+let qedsymbol ctx =
+  let ib = read-inline ctx {阿} in
+  let (aw,h,d) = get-natural-metrics ib in
+  let w = aw *' 0.6 in
+  let xshift = 3pt in
+  inline-fil ++ 
+  (
+    inline-graphics (w +' xshift) h d (fun (x,y) ->
+      [
+        stroke 0.5pt Color.black 
+          (start-path (x +' xshift, y -' d) 
+            |> line-to (x +' xshift +' w, y -' d)
+            |> line-to (x +' xshift +' w, y +' h)
+            |> line-to (x +' xshift, y +' h)
+            |> close-with-line
+          );
+      ]
+    )
+  )
+
+
+let-block ctx +prp it =
+  let ib = read-inline ctx it in
+  let bb = 
+    (JLReqParagraph.get-paragraph-boxes (| indent = ~(jlreq-length @`1zw`);|) ctx ib) ++ (
+      if !number-of-paragraph-in-proof >= 0 then
+        let () = paragraph-counter <- !paragraph-counter + 1 in
+        if !number-of-paragraph-in-proof == !paragraph-counter then
+            qedsymbol ctx
+        else inline-nil
+      else inline-nil
+    ) in
+  line-break true true ctx bb
+in
+
+open Derive in
+
+document(|
+  title = {UEC 代数勉強会 第7回};
+  author = {9trap/隕石};
+  date = {2021/07/01};
+  show-title = true;
+  show-toc = true;
+|) '<
+  +section{復習}<
+    +subsection{はじめに} <
+      +p{
+        だいぶ間が空いたので復習を入れておきます。
+      }
+      +p{
+        金子晃「応用代数講義」ISBN4-7819-1117-Xを使います。
+      }
+    >
+    +subsection{代数系}<
+      +p{
+        集合に演算を導入し、特定の条件を満たすようなモデルを考えると、さまざまな構造を扱えてうれしい。
+        そういったモデルを代数系という。
+      }
+      +definition?:(`def-group`) ?:({群})<
+        +p {
+          集合${G}と${G}における2項演算
+        }
+        +math (${
+          \circ : G \times G \rightarrow G \; \paren{a, b} \mapsto a \circ b
+        });
+        +p {
+          が次の条件を満たすとき、組${\paren{G, \circ}}を群という。
+        }
+        +align[
+          [${\text!{(1)}}; ${\forall a,b,c \in G \paren{a \circ b} \circ c = a \circ \paren{b \circ c}}; ${\text!{(結合律)}};];
+          [${\text!{(2)}}; ${\exists e \in G \sqbracket{
+            \forall a \in G \sqbracket{
+              e \circ a = a \circ e = a
+            }
+          }}; ${\text!{(単位元の存在)}};];
+          [${\text!{(3)}}; ${\forall g \in G \sqbracket{
+            \exists h \in G \sqbracket{
+              g \circ h = h \circ g = e
+            }
+          }}; ${\text!{(逆元の存在)}};];
+        ];
+        +p{
+          誤解を生まないと判断された多くの場合、${G}そのものを群と呼ぶ。
+        }
+      >
+      +p{
+        群${G}が可換律${\forall a,b \in G \sqbracket{a \circ b = b \circ a}}を満たす場合、${G}を可換群もしくはAbel群と呼ぶ。
+      }
+      +p{
+        演算子は、可換群であれば${+}を使ったり、そうでない場合は省略する事が多い。
+      }
+
+      +definition?:(`def-ring`) ?:({環})<
+        +p {
+          集合${A}と${A}における積と和と呼ばれる2つの2項演算
+        }
+        +math (${
+          \cdot : A \times A \rightarrow A \; \paren{a, b} \mapsto a \cdot b
+        });
+        +math (${
+          + : A \times A \rightarrow A \; \paren{a, b} \mapsto a + b
+        });
+        +p {
+          が次の条件を満たすとき、組${\paren{A, +, \cdot}}を環という。
+        }
+        +align[
+          [${\text!{(1)}}; ${\paren{A, +} \text!{は可換群を成す}}];
+          [${\text!{(2)}}; ${\forall a, b, c \in A \sqbracket{\paren{ab}c = a\paren{bc}}}; ${\text!{(乗法の結合律)}};];
+          [${\text!{(3)}}; ${\forall a, b, c \in A \sqbracket{ a\paren{b+c} = ab + ac }}; ${\text!{(分配律)}};];
+        ];
+        +p{
+          誤解を生まないと判断された多くの場合、${A}そのものを環と呼ぶ。
+        }
+      >
+
+      +definition?:(`def-field`) ?:({体})<
+        +p {
+          集合${K}と${K}における積と和と呼ばれる2つの2項演算
+        }
+        +math (${
+          \cdot : K \times K \rightarrow K \; \paren{x, y} \mapsto x \cdot y
+        });
+        +math (${
+          + : K \times K \rightarrow K \; \paren{x, y} \mapsto x + y
+        });
+        +p {
+          が次の条件を満たすとき、組${\paren{K, +, \cdot}}を環という。
+        }
+        +align[
+          [${\text!{(1)}}; ${\paren{K, +} \text!{は可換群を成す}}];
+          [${\text!{(2)}}; ${\paren{K \\ \brace{0}, \cdot} \text!{は可換群を成す}}];
+          [${\text!{(3)}}; ${\forall a, b, c \in A \sqbracket{ a\paren{b+c} = ab + ac }}; ${\text!{(分配律)}};];
+        ];
+        +p{
+          誤解を生まないと判断された多くの場合、${K}そのものを体と呼ぶ。
+        }
+      >
+
+      +p{
+        代数系は他にも色々ある。例えば亜群(マグマ)、半群、モノイド、Kleene代数など。
+      }
+    >
+    +subsection{準同型写像}<
+      +definition?:(`def-homomorphism`) ?:({準同型写像})<
+        +p{
+          群${G, H}とその間の写像${\phi : G \rightarrow H}が以下を満たすとき、写像${\phi}を準同型であるという。
+        }
+        +math (
+          ${\forall x,y \in G \sqbracket{ \app{\phi}{x} \app{\phi}{y} = \app{\phi}{xy} }}
+        );
+      >
+      +proposition<
+        +p{
+          写像${\phi}が群${G}から${H}への準同型であるとき、
+        }
+        +align[
+          [
+            ${\text!{(1)}};
+            ${\app{\phi}{e_G} = e_H};
+          ];
+          [
+            ${\text!{(2)}};
+            ${\forall x \in G \sqbracket{ 
+              \app{\phi}{x^{-1}} = \app{\phi}{x}^{-1}
+            }};
+          ];
+        ];
+        +proof<
+          +prp{
+            ${G}の任意の元${x}について、
+          }
+          +align[
+            [
+              ${\app{\phi}{e_Gx}};
+              ${= \app{\phi}{e_G}\app{\phi}{x}};
+            ];
+            [
+              ${\app{\phi}{x}};
+              ${= \app{\phi}{e_G}\app{\phi}{x}};
+            ];
+            [
+              ${e_H};
+              ${= \app{\phi}{e_G}};
+            ];
+          ];
+          +prp{
+            また、
+          }
+          +align[
+            [
+              ${\app{\phi}{x^{-1}x}};
+              ${= \app{\phi}{x^{-1}}\app{\phi}{x}};
+            ];
+            [
+              ${\app{\phi}{e_G}};
+              ${= \app{\phi}{x^{-1}}\app{\phi}{x}};
+            ];
+            [
+              ${e_H};
+              ${= \app{\phi}{x^{-1}}\app{\phi}{x}};
+            ];
+            [
+              ${\app{\phi}{x}^{-1}};
+              ${= \app{\phi}{x^{-1}}};
+            ];
+          ];
+          +prp{
+
+          }
+        >
+      >
+      +definition?:(`def-isomorphism`) ?:({同型写像})<
+        +p{
+          準同型写像${\phi: G \rightarrow H}が全単射であるとき、同型写像であるといい、このように群${G}と群${H}のあいだに同型が存在するとき${G \cong H}とかき、単に${G}と${H}は同型であるという。
+        }
+      >
+      +proposition<
+        +p{
+          同型写像${\phi}の逆射も同型写像(準同型写像)である。
+        }
+        +proof<
+          +prp{
+            雑な証明を示す。
+          }
+          +align[
+            [
+              ${\app{\phi}{\app{\phi^{-1}}{xy}}};
+              ${= xy};
+            ];
+            [
+              ${\app{\phi}{\app{\phi^{-1}}{xy}}};
+              ${= \app{\phi}{\app{\phi^{-1}}{x}} \app{\phi}{\app{\phi^{-1}}{y}}};
+            ];
+            [
+              ${\app{\phi^{-1}}{xy}};
+              ${= \app{\phi^{-1}}{x} \app{\phi^{-1}}{y}};
+            ];
+          ];
+          +prp{
+            
+          }
+        >
+      >
+    >
+    +subsection{置換表現}<
+      +proposition?:(`prop-prodsubst`)?:({群の積の単射性})<
+        +p{
+          有限群${G}の演算について、片方の引数を${g \in G}に固定した写像${\phi : G \rightarrow G \; a \mapsto ga}は単射である。
+        }
+      >
+      +proof<
+        +prp{
+          任意の${a, b \in G}について、
+        }
+        +math (${
+          a = b \Leftrightarrow g^{-1}a = g^{-1}b
+        });
+        +prp{
+
+        }
+      >
+      +p{
+        つまり、この写像は群の要素の置換とみなすことができる。
+        各元に番号をつける写像を${f}とすると、${f \circ \phi \circ f^{-1}}は${S_n}の元である。
+      }
+      +definition ?:(`def-substexp`) ?:({左移動による置換表現})<
+        +p{
+          この写像${\phi}を左移動といい、${f \circ \phi \circ f^{-1}}は左移動による置換表現という。
+        }
+      >
+    >
+    +subsection{剰余類}<
+      +notation ?:(`nota-gA`) ?:({左移動の像})<
+        +p{
+          群${G}の部分集合${A}について、${g}による左移動の${A}の像を${gA}とかく。すなわち、
+        }
+        +math (${
+          gA := \setsep{ga}{a\in A}
+        });
+      >
+      +proposition ?:(`prop-numgA`)<
+        +p{
+          群${G}の有限部分集合${A}について、${\abs{A} = \abs{gA}}
+        }
+      >
+      +proof<
+        +prp{
+          命題\ref(`prop-prodsubst`);より。
+        }
+      >
+      +lemma ?:(`lemma-left`) ?:({部分群の左移動})<
+        +p{
+          群${G}の部分群${H}について、${g \in H}ならば${gH = H}、${g \notin H}ならば${gH \cap H = \emptyset}
+        }
+      >
+      +proof<
+        +prp{
+          前者は群の演算が閉じていることから自明。
+        }
+        +prp{
+          ${g \notin H}の場合、${gH \cap H \neq \emptyset}とすると、
+          ${\exists x \sqbracket{x \in gH \land x \in H}}。
+        }
+        +prp{
+          その${x}について、${x \in gH}だから${\exists y \sqbracket{x = gy \land y \in H}}。
+        }
+        +prp{
+          その${y}について、${xy^{-1} = g}。${x \in H, y \in H}より${g \in H}が導かれるがこれは仮定に矛盾する。よって、帰謬法から${gH \cap H = \emptyset}。
+        }
+      >
+      +proposition ?:(`corol-eqresidue`)<
+        +p{
+          群${G}とその部分群${H}について、${a \sim b \Leftrightarrow aH = bH}として関係を定義すると、この関係${\sim}は同値関係となる。
+        }
+      >
+      +proof<
+        +prp{
+          自明に${aH = aH \land \paren{aH=bH \Leftrightarrow bH=aH}}であるから、反射律と対称律が成り立つ。
+        }
+        +prp{
+          ${aH=bH \land bH=cH}と仮定すると、${=}の推移律から${aH=cH}。よって、推移律も満たす。
+        }
+      >
+      +corollary <
+        +p{
+          上で定めた関係は同値関係であるから、同値類${gH}により、群${G}が分割される。
+        }
+      >
+      +definition ?:(`def-leftresidue`) ?:({左剰余類})<
+        +p{
+          ここでの同値類${gH}を左剰余類という。
+        }
+      >
+      +theorem ?:(`theorem-lagrange`) ?:({Lagrangeの定理})<
+        +p{
+          部分群の位数は元の群の位数の約数である。
+        }
+      >
+      +proof<
+        +prp{
+          命題\ref(`prop-numgA`);から、部分群から導かれる左剰余類はすべて要素数が同じである。
+          よって、分轄数${[G:H]}について、${\abs{G} = [G:H] \cdot \abs{H}}。
+        }
+      >
+    >
+    +subsection{作用}<
+      +definition ?:(`def-action`) ?:({作用})<
+        +p{
+          群${G}から集合${X}について、演算${\bullet:G \times X \rightarrow X}が以下を満たすとき、これを作用という。
+        }
+        +align[
+          [${\text!{(1)}}; ${\forall x \in X \sqbracket{ e \bullet x  = x}};];
+          [${\text!{(2)}}; ${
+            \forall g, h \in G \sqbracket{
+              \forall x \in X \sqbracket{ \paren{h g} \bullet x = h \bullet \paren{g \bullet x} }
+            }
+          };];
+        ];
+      >
+    >
+  >
+  +section{対称式と交代式}<
+    +subsection{多項式への作用} <
+      +proposition ?:(`s`) ?:({置換群の多項式への作用}) <
+        +p{
+          置換群から${n}変数多項式環/有理関数体の変換への対応
+        }
+        +math(${
+          \sigma \in S_n \mapsto \app{\paren{\sigma f}}{x_1, x_2, \cdots, x_n}
+        });
+        +p{
+          を以下のように定める
+        }
+        +math(${
+          \app{\paren{\sigma f}}{x_1, x_2, \cdots, x_n}:=
+          \app{f}{x_{\app{\sigma}{1}}, x_{\app{\sigma}{2}}, \cdots, x_{\app{\sigma}{n}}}
+        });
+        +p{
+          このとき、この対応は作用である。
+        }
+      >
+      +proof<
+        +prp{
+          置換群の単位元は恒等射であるから、条件(1)がみたされる。
+        }
+        +prp{
+          また、
+        }
+        +align[
+          [${\app{ \paren{\sigma \paren{\tau f}} }{x_1, x_2, \cdots, x_n}}; ${= \app{\paren{\tau f}}{x_{\app{\sigma}{1}}, x_{\app{\sigma}{2}}, \cdots, x_{\app{\sigma}{n}}}};];
+          [${}; ${= \app{f}{x_{\app{\tau}{\app{\sigma}{1}}}, x_{\app{\tau}{\app{\sigma}{2}}}, \cdots, x_{\app{\tau}{\app{\sigma}{n}}}}};];
+          [${}; ${= \app{f}{x_{\app{\paren{\sigma \tau}}{1}}, x_{\app{\paren{\sigma \tau}}{2}}, \cdots, x_{\app{\paren{\sigma \tau}}{n}}}};];
+          [${}; ${= \app{\paren{\sigma \tau}f}{x_1, x_2, \cdots, x_n}};];
+        ];
+      >
+      
+    >
+    +subsection{対称式と交代式} <
+      +p{
+        多項式のうち変数置換で不変であるものを対称式といい、符号が変わるものを交代式という。
+      }
+      +p{
+        交代式の符号は置換の符号と一致することを導けるが、ここでは示さない。
+      }
+      +math (${
+        \app{\paren{\sigma f}}{x_1, x_2, \cdots, x_n} = \paren{\sgn \sigma} \app{f}{x_1, x_2, \cdots, x_n}
+      });
+      +example ?:(`ex-elemsympoly`) ?:({基本対称式})<
+        +p{
+          対称式の代表的な例に、以下のような基本対称式がある。
+        }
+        +math (${
+          s_k = \sum_{1 \leq i_1 < i_2 < \cdots < i_k \leq n} x_{i_1}x_{i_2}\ldots x_{i_k}
+        });
+        +p{
+          いま、${x_k}と${x_l}を入れ替えたとする。すなわち、${\paren{k, l}}を作用させたとする。ただし、${\paren{k, l} = \paren{l, k}}であるから、${k < l}とする。${l < k}の場合はメタ的に${k}と${l}を入れ替えた文言を用意すればいい。${k=l}ならば、恒等置換であるので${s_k}が不変であるのは言うまでもない。
+        }
+        +p{
+          ${s_k}は、全ての長さ${k}の狭義単調増加自然数列
+          ${i:\paren{1, \cdots, k} \rightarrow \paren{1, \cdots, n} \;
+          a \mapsto \app{i}{a}}についての項${x_{\app{i}{1}}x_{\app{i}{2}} \ldots x_{\app{i}{k}}}の和である。
+        }
+        +p{
+          ${x_k}と${x_l}両方が含まれる項と両方とも含まれない項は${k, l}の置換によって不変である。
+          任意の${x_k}が含まれていて${x_l}が含まれていない項${t}について、${tx_l/x_k}は項であり${s_k}に含まれる。これらの和は${x_k}と${x_l}の置換で不変であり、任意の${x_l}が含まれていて${x_k}が含まれていない項はこれらで尽くされるため${s_k}は互換で不変。
+        }
+        +p{
+          任意の置換は互換の積で表せるから${s_k}は任意の置換で不変である。
+        }
+      >
+      +example ?:(`ex-vandepoly`) ?:({差積})<
+        +p{
+          交代式の代表的な例に、差積がある。
+        }
+        +math (${
+          \app{\Delta}{x_1, x_2, \cdots, x_n} = \prod_{1 \leq i < j \leq n} \paren{x_i - x_j}
+        });
+        +p{
+          ${x_k, x_l}を入れ替えることを考える。
+          差積が${\paren{x_p - x_k}}で割り切れるとする。このとき、${\paren{x_p - x_l}}でも割り切れる。${\paren{x_p - x_k}\paren{x_p - x_l}}は${k, l}の置換で不変である。
+        }
+        +p{
+          差積が${\paren{x_k - x_p}}で割り切れるとする。${p < l}のとき、差積は${\paren{x_p - x_l}}で割り切れる。それらの積${\paren{x_k - x_p}\paren{x_p - x_l}}は${k, l}の置換で不変。${p > l}のとき、差積は${\paren{x_l - x_p}}で割り切れる。それらの積${\paren{x_k - x_p}\paren{x_l - x_p}}は${k, l}の置換で不変。
+        }
+        +p{
+          以上より、${\paren{x_k - x_l}}以外の積は${k, l}の置換で不変であるが、${\paren{x_k - x_l}}だけは符号が変わってしまう。よって、差積は交代式。
+        }
+      >
+      +definition ?:(`def-termtype`) ?:({単項式の型})<
+        +p{
+          ${n}変数の単項式の型とは、${x_i}の次数による${n}つ組${\bm{a}}のことをいう。
+        }
+        +p{
+          ${x_1^{a_1}x_2^{a_2}\ldots x_n^{a_n}}の型は${\bm{a} = \paren{a_1, a_2, \cdots, a_n}}
+        }
+      >
+      +definition ?:(`def-termorder`) ?:({単項式の順序})<
+        +p{
+          型${\bm{a}, \bm{b}}の半順序${>}を辞書式順序とする。すなわち、${a_i \neq b_i}である最小の${i}について、${a_i > b_i}であるとき、またそのときのみ${\bm{a} > \bm{b}}とする。
+        }
+        +p{
+          また、順序${\geq}を${\forall \bm{a}, \bm{b} \sqbracket{\bm{a} \geq \bm{b} \Leftrightarrow \paren{ \bm{a} > \bm{b} \lor \bm{a} = \bm{b} } }}で定める。
+        }
+        +p{
+          順序${\geq}は自然数の順序によるから全順序である。${n}次の単項式全体の集合は有限であるから、この順序において単項式の集合の最大元が存在する。
+        }
+      >
+      +proposition ?:(`prop-term1`) ?:({基本対称式の積による単項式})<
+        +p {
+          基本対称式の積${s_1^{d_1}s_2^{d_2} \cdots s_n^{d_n}}の単項式のうち上で定めた順序で最大の項は${x^{\sum_{k=1}^n d_k}x^{\sum_{k=2}^n d_k}\cdots x^{d_n}}である。
+        }
+      >
+      +proof<
+        +prp{
+          辞書式順序では小さい添字の次数のほうが優先されるから、${s_1^{d_1}s_2^{d_2} \cdots s_n^{d_n}}のうち、${x_1}の次数が一番高いものが候補である。
+        }
+        +prp{
+          例\ref(`ex-elemsympoly`);の定義からどの${s_k}の単項式も${x_l}の次数はたかだか1である。よって、すべての${s_k}について${x_1}を含む項の積によってなる単項式の字数である${d_1 + d_2 + \cdots + d_n}が${x_1}の次数の最大である。${s_k}の各項の次数は${k}であるから${x_1}を含む項は${n-1}個のうちから${k-1}個を選ぶ組み合わせの数と同じであって、${x_1}がこの次数である項はいくつかあることがある。${s_1}の各項の次数は1であって${x_1}を含むと${x_2}を含むことができないから、これらの単項式のうち${x_2}の次数が最大であるものは${d_2 + \cdots + d_n}である。続きは帰納的に示される。
+        }
+        +prp{
+          
+        }
+      >
+      +theorem ?:(`theorem-elemsympoly`) ?:({対称式の表現})<
+        +p{
+          すべての対称式は基本対称式の多項式で表される。
+        }
+      >
+      +proof<
+        +p{
+          命題\ref(`prop-term1`);から、順に基本対称式の積で表せる最大の単項式を引いていくと0になる。
+        }
+        +p{
+          具体的には、対称式${f}の最大次数${l}の最大の単項式の型${\bm{a} = \paren{a_1, a_2, \cdots, a_l}}とすると、${s_1^{a_1-a_2}s_2^{a_2-a_3} \cdots s_n^{a_n}}の最大の項の型は${\bm{a}}だから、${f - s_1^{a_1-a_2}s_2^{a_2-a_3} \cdots s_n^{a_n}}の最大の項の型${\bm{b}}について、${\bm{a} > \bm{b}}。帰納的に項の数が減っていく(もとの項の数を${p}とすると${j}ステップ目の項の数は${p-j}であることを帰納的に示すことができる)。よって、定理を示すことができる。
+        }
+      >
+      +problem ?:(`problem-3.9`) ?:({参考書問3.9})<
+        +p{
+          ${x_1^{4} + \cdots + x_n^{4}}を基本対称式の多項式で表せ。
+        }
+        +p{
+          ${x_1^{4}}を最大の単項式として含む基本対称式による単項式は${s_1^{4}}。
+        }
+        +align[
+          [${s_1^{4}}; ${= \paren{\sum_{i=1}^{n} x_i}^4};];
+          [${}; ${
+            = \sum_{i=1}^{n} x_i^4 + 
+            \sum_{1 \leq i_1 < i_2 \leq n} \paren{4x_{i_1}^3x_{i_2} + 6x_{i_1}^2x_{i_2}^2 + 4x_{i_1}x_{i_2}^3} +
+            \sum_{1 \leq i_1 < i_2 < i_3 \leq n} \paren{
+              12x_{i_1}^2x_{i_2}x_{i_3} + 12x_{i_1}x_{i_2}^2x_{i_3} + 12x_{i_1}^2x_{i_2}x_{i_3}^2
+            }
+          };];
+          [${};${
+            + \sum_{1 \leq i_1 < i_2 < i_3 < i_4 \leq n}
+              24x_{i_1}x_{i_2}x_{i_3}x_{i_4}
+          };];
+        ];
+        +p{
+          より、
+        }
+        +align[
+          [${\sum_{i=1}^{n}x_i^4 - s_1^{4}}; ${
+            = - \sum_{1 \leq i_1 < i_2 \leq n} \paren{4x_{i_1}^3x_{i_2} + 6x_{i_1}^2x_{i_2}^2 + 4x_{i_1}x_{i_2}^3} -
+            \sum_{1 \leq i_1 < i_2 < i_3 \leq n} \paren{
+              12x_{i_1}^2x_{i_2}x_{i_3} + 12x_{i_1}x_{i_2}^2x_{i_3} + 12x_{i_1}^2x_{i_2}x_{i_3}^2
+            }};];
+          [${};${
+            - \sum_{1 \leq i_1 < i_2 < i_3 < i_4 \leq n}
+              24x_{i_1}x_{i_2}x_{i_3}x_{i_4}
+          };];
+        ];
+        +p{
+          次に最大の単項は${-4x_1^3x_2}であるから、${-4s_1^{2}s_2}を引けば良い。
+        }
+        +align[
+          [${s_1^{2}s_2}; ${= 
+          \paren{\sum_{i=1}^{n} x_i}^2 \paren{\sum_{1 \leq i_1 < i_2 \leq n} x_{i_1}x_{i_2}} };];
+          [${}; ${=
+            \paren{\sum_{i=1}^{n} x_i^2
+              + \sum_{1 \leq i_1 < i_2 \leq n} 2x_{i_1}x_{i_2}
+            } \paren{\sum_{1 \leq i_1 < i_2 \leq n} x_{i_1}x_{i_2}}
+           };];
+          [${}; ${=
+            \sum_{1 \leq i_1 < i_2 \leq n} \paren{
+               x_{i_1}^3x_{i_2} + 2x_{i_1}^2x_{i_2}^2 + x_{i_1}x_{i_2}^3
+            }
+            +\sum_{1 \leq i_1 < i_2 < i_3 \leq n} \paren{
+               5x_{i_1}^2x_{i_2}x_{i_3} + 5x_{i_1}x_{i_2}^2x_{i_3} + 5x_{i_1}x_{i_2}x_{i_3}^2
+            }
+          };];
+          [${}; ${
+            +\sum_{1 \leq i_1 < i_2 < i_3 < i_4 \leq n} 12x_{i_1}x_{i_2}x_{i_3}x_{i_4}
+          };];
+        ];
+        +p{
+          より
+        }
+        +align[
+          [${\paren{\sum_{i=1}^{n}x_i^4} - s_1^{4} + 4s_1^2s_2}; ${
+            = \sum_{1 \leq i_1 < i_2 \leq n} 2x_{i_1}^2x_{i_2}^2 +
+            \sum_{1 \leq i_1 < i_2 < i_3 \leq n} \paren{
+              8x_{i_1}^2x_{i_2}x_{i_3} + 8x_{i_1}x_{i_2}^2x_{i_3} + 8x_{i_1}x_{i_2}x_{i_3}^2
+            }
+          };];
+          [${}; ${
+            + \sum_{1 \leq i_1 < i_2 < i_3 < i_4 \leq n}
+              24x_{i_1}x_{i_2}x_{i_3}x_{i_4}
+          };];
+        ];
+        +p{
+          次に最大の単項は${2x_1^2x_2^2}であるから、${2s_2^2}を引けば良い。
+        }
+        +align[
+          [${s_2^2}; ${= \paren{\sum_{1 \leq i_1 < i_2 \leq n} x_{i_1}x_{i_2}}^2};];
+          [${}; ${= \sum_{1 \leq i_1 < i_2 \leq n} x_{i_1}^2x_{i_2}^2 +
+            \sum_{1 \leq i_1 < i_2 < i_3 \leq n}\paren{
+              2x_{i_1}^2x_{i_2}x_{i_3} + 2x_{i_1}x_{i_2}^2x_{i_3} +  2x_{i_1}x_{i_2}x_{i_3}^2
+            }+
+            \sum_{1 \leq i_1 < i_2 < i_3 < i_4 \leq n}
+            6x_{i_1}x_{i_2}x_{i_3}x_{i_4}
+          };];
+        ];
+        +p{
+          より、
+        }
+        +align[
+          [${\paren{\sum_{i=1}^{n}x_i^4} - s_1^{4} + 4s_1^2s_2 - 2s_2^2}; ${
+            = \sum_{1 \leq i_1 < i_2 < i_3 \leq n} \paren{
+              4x_{i_1}^2x_{i_2}x_{i_3} + 4x_{i_1}x_{i_2}^2x_{i_3} + 4x_{i_1}x_{i_2}x_{i_3}^2
+            }
+          };];
+          [${}; ${
+            + \sum_{1 \leq i_1 < i_2 < i_3 < i_4 \leq n}
+              12x_{i_1}x_{i_2}x_{i_3}x_{i_4}
+          };];
+        ];
+        +p{
+          次に最大の単項は${4x_1^2x_2x_3}であるから、${4s_1s_3}を引けば良い。
+        }
+        +align[
+          [${s_1s_3}; ${= 
+            \paren{
+              \sum_{i}^{n} x_{i}
+            }\paren{
+              \sum_{1 \leq i_1 < i_2 < i_3 \leq n} x_{i_1}x_{i_2}x_{i_3}
+            }
+          };];
+          [${}; ${=
+            \sum_{1 \leq i_1 < i_2 < i_3 \leq n} \paren{
+              x_{i_1}^2x_{i_2}x_{i_3} + x_{i_1}x_{i_2}^2x_{i_3} + x_{i_1}x_{i_2}x_{i_3}^2
+            }+\sum_{1 \leq i_1 < i_2 < i_3 < i_4 \leq n} 4x_{i_1}x_{i_2}x_{i_3}x_{i_4}
+          };];
+        ];
+        +p{
+          より、
+        }
+        +align[
+          [${\paren{\sum_{i=1}^{n}x_i^4} - s_1^{4} + 4s_1^2s_2 - 2s_2^2 - 4s_1s_3}; ${
+            = -\sum_{1 \leq i_1 < i_2 < i_3 < i_4 \leq n} 4x_{i_1}x_{i_2}x_{i_3}x_{i_4}
+          };];
+          [${}; ${= -4s_4
+          };];
+        ];
+        +p{
+          よって、${\sum_{i=1}^{n} x_i^4 = s_1^4 - 4s_1^2s_2 + 2s_2^2 + 4s_1s_3 - 4s_4}。
+        }
+      >
+      +example ?:(`ex-vandermonde`) ?:({Vandermondeの行列式})<
+        +p{
+          等比級数になっているベクトルを並べた行列の行列式
+        }
+        +math (${
+          V_n = \abs{\matrix![
+            [${1}; ${1}; ${\cdots}; ${1}];
+            [${x_1}; ${x_2}; ${\cdots}; ${x_n}];
+            [${\vdots}; ${\vdots}; ${\ddots}; ${\vdots}];
+            [${x_1^{n-1}}; ${x_2^{n-1}}; ${\cdots}; ${x_n^{n-1}}];
+          ]} = \prod_{1 \leq i < j \leq n} \paren{x_j - x_i}
+        });
+        +p{
+          は差積で見たように交代式である。
+        }
+      >
+      +example ?:(`ex-discriminant`) ?:({判別式})<
+        +p{
+          ${\alpha_1, \cdots, \alpha_n}を根にもつ多項式
+          ${f = \paren{x-\alpha}\cdots \paren{x-\alpha_n}}
+          の判別式${D}を
+        }
+        +math (${
+          D = \prod_{1\leq i < j \leq n}\paren{\alpha_i-\alpha_j}^2 
+            = \app{\Delta}{\alpha_1, \cdots, \alpha_n}
+        });
+        +p{
+          で定義する。
+        }
+      >
+      +p{
+        判別式が${0}になるとき、またそのときのみ
+        ${\exists i,j \sqbracket{\alpha_i = \alpha_j}}、すなわち重根をもつことは自明である。
+      }
+      +p{
+        判別式が負であるとき、
+        ${\exists i,j \sqbracket{\paren{\alpha_i-\alpha_j}} \in \mathbb{C} }であるから、複素数解をもつ。
+      }
+    >
+    +subsection{Hilbertの基底定理} <
+      +p{
+        \href(`http://aozoragakuen.sakura.ne.jp/taiwa/taiwaNch02/huhensiki/node1.html`){ここ}がわかりやすい。
+      }
+    >
+  >
+  +section{正規部分群と商群}<
+    +subsection{正規部分群と商群} <
+      +definition ?:(`def-conjugation`) ?:({共役})<
+        +p {
+          群${G}の元${g}と部分群${H}について、
+        }
+        +math (${
+          g^{-1}Hg := \setsep{g^{-1}hg}{h\in H}
+        });
+        +p{
+          を${H}の${x}による共役という。
+        }
+      >
+      +notation ?:(`nota-prod`) <
+        +p{
+          群${G}の部分集合${H, K}について
+        }
+        +math (${
+          HK := \setsep{hk}{h \in H \land k \in K}
+        });
+      >
+      +proposition ?:(`prop-sameresidueprod`)<
+        +p{
+          群${G}と部分群${H}について、${H}の任意の共役が${H}に等しい、すなわち
+          ${\forall g \in G \sqbracket{g^{-1}Hg = H}}であるとき、
+        }
+        +math (${
+          \forall g_1, g_2 \in G \sqbracket{
+            \forall a_1 \in g_1H \forall a_2 \in g_2H \sqbracket{
+              \paren{a_1a_2} H = \paren{g_1g_2} H
+            }
+          }
+        });
+      >
+      +proof<
+        +prp{
+          ${\exists h_1 \in H \sqbracket{ a_1 = g_1h_1 } }、${a_2}も同様であるから、
+        }
+        +align[
+          [${\paren{a_1a_2} H}; ${= \paren{g_1h_1g_2h_2} H};];
+          [${}; ${= \paren{g_1h_1g_2} H}; ${H\text!{は群であるから、}h_2H = H};];
+          [${}; ${= \paren{g_1h_1g_2g_2^{-1}h_2g_2} H}; ${g_2^{-1}Hg_2 = H\text!{より}g_2^{-1}h_2g_2H =H}];
+          [${}; ${= \paren{g_1h_1h_2g_2} H}; ${}];
+          [${}; ${= \paren{g_1h_1h_2g_2g_2^{-1}} H g_2}; ${g_2^{-1}Hg_2 = H}];
+          [${}; ${= \paren{g_1h_1h_2} H g_2}; ${}];
+          [${}; ${= \paren{g_1} H g_2}; ${}];
+          [${}; ${= \paren{g_1g_2} H}; ${g_2^{-1}Hg_2 = H}];
+        ];
+      >
+      +p{
+        群${G}の元${g_1, g_2}と部分群${H}について、以下のような剰余群の2項演算が定まる。
+      }
+      +math (${
+        g_1H g_2H := \paren{g_1 g_2}H
+      });
+      +p{
+        命題\ref(`prop-sameresidueprod`);から代表元に関してこの積は一意であるから、剰余類同士の演算として定められる。
+      }
+      +proposition<
+        +p{
+          群${G}とその部分群${H}について、以下の命題はすべて互いに同値である。
+        }
+        +align[
+          [${\text!{(1)}}; ${\forall g \in G \sqbracket{ g^{-1}Hg \subset H } };];
+          [${\text!{(2)}}; ${\forall g \in G \sqbracket{ g^{-1}Hg \supset H } };];
+          [${\text!{(3)}}; ${\forall g \in G \sqbracket{ g^{-1}Hg = H } };];
+        ];
+      >
+      +proof<
+        +prp{
+          (1) ${\Rightarrow} (2) を示す。
+        }
+        +prp{
+          (1)を仮定する。
+          任意の${g \in G}と${h \in H} について、(1)から${g^{-1}hg \in H}。すなわち、${\exists h' \in H \sqbracket{h' = g^{-1}hg}}。
+        }
+        +prp{
+          そのような${h'}について、${h = gh'g^{-1} = \paren{g^{-1}}^{-1}h'g^{-1}}
+        }
+        +prp{
+          すべての元は逆元をもつため、以上より
+        }
+        +math (${
+          \forall g \in G \forall h \in H \sqbracket{ 
+            \exists h' \in H \sqbracket{ h = g^{-1}h'g } 
+          }
+        });
+        +prp{
+          すなわち、${\forall g \in G \sqbracket{ g^{-1}Hg \supset H }}を得る。
+        }
+        +prp{
+          (1) ${\Leftarrow} (2)を示す。
+          雑な導出木を示しておきます。
+        }
+        +math (${
+          \proven!(
+            open DeriveDSL in
+            derive ${(1) \Leftarrow (2)}
+            |> by {仮定(1)の除去}
+            |> from[
+              derive ${(2)}
+              |> by {(2)の定義}
+              |> from[
+                derive ${\forall g \in G \sqbracket{g^{-1}Hg \supset H}}
+                |> from[
+                  derive ${\forall g \sqbracket{ g \in G \Rightarrow g^{-1}Hg \supset H } }
+                  |> by{\<${g}\>}
+                  |> from[
+                    derive ${g \in G \Rightarrow g^{-1}Hg \supset H}
+                    |> by{仮定の除去}
+                    |> from[
+                      derive ${g^{-1}Hg \supset H}
+                      |> by {${\supset}の定義}
+                      |> from[
+                        derive ${\forall h \sqbracket{ h \in H \Rightarrow h \in g^{-1}Hg}}
+                        |> by {\<${h}\>}
+                        |> from[
+                          derive ${h \in H \Rightarrow h \in g^{-1}Hg}
+                          |> by {仮定の除去}
+                          |> from[
+                            derive ${h \in g^{-1}Hg}
+                            |> from[
+                              derive ${\exists a \in H \sqbracket{ h = g^{-1}ag }}
+                              |> from[
+                                derive ${ h = g^{-1}h'^{-1}g }
+                                |> from[
+                                  derive ${ghg^{-1} = h'^{-1}}
+                                  |> from[
+                                    derive ${g^{-1}hg = h'}
+                                    |> from[
+                                      derive ${\exists h' \in H \sqbracket{
+                                        g^{-1}hg = h'
+                                      }}
+                                      |> from[
+                                        derive ${h \in g^{-1}Hg}
+                                        |> from[
+                                          assume ${h \in H};
+                                          derive ${h \in H \Rightarrow h \in g^{-1}Hg}
+                                          |> from[
+                                            derive ${\forall h \sqbracket{
+                                              h \in H \Rightarrow h \in g^{-1}Hg
+                                            }}
+                                            |> by {\<${h}\>}
+                                            |> from[
+                                              derive ${g^{-1}Hg \supset H}
+                                              |> from[
+                                                derive ${\forall g \sqbracket{
+                                                  g^{-1}Hg \supset H
+                                                }}
+                                                |>from[
+                                                  assume ${\text!{(2)}}
+                                                ];
+                                              ];
+                                            ];
+                                          ];
+                                        ]
+                                      ];
+                                    ];
+                                  ];
+                                ];
+                              ];
+                            ];
+                          ];
+                        ];
+                      ];
+                    ];
+                  ];
+                ];
+              ];
+            ]
+          )
+        });
+      >
+      +p{
+        上でみたように、これらの条件によって、剰余類の間に演算を定義できる。剰余類の集合(すなわち分割)とこの演算は自明に群を成す。
+      }
+      +definition ?:(`def-quotient`) ?:({商群、剰余群})<
+        +p{
+          群${G}の部分群${H}による剰余類の集合${G/H}と、2項演算
+        }
+        +math (${
+          \circ : G/H \times G/H \rightarrow G/H \; g_1H \circ g_2H \mapsto \paren{g_1g_2}H
+        });
+        +p{
+          の成す群を商群、または剰余群という。
+        }
+      >
+      +p {
+        商群の積の定義から、群${G}の元${g}を${g}を含む剰余類に写す自然な写像
+        ${\pi : G \rightarrow G/H}は全射かつ準同型である。
+      }
+      +align[
+        [
+          ${\app{\pi}{g_1 g_2}};
+          ${= \paren{g_1 g_2}H};
+        ];
+        [
+          ${};
+          ${= g_1Hg_2H};
+        ];
+        [
+          ${};
+          ${= \app{\pi}{g_1}\app{\pi}{g_2}};
+        ];
+      ];
+      +math (${
+        \proven!(
+          open DeriveDSL in
+          derive ${g \in G \land A = gH}
+          |>from[
+            derive ${\exists g \in G \sqbracket{A = gH}}
+            |> from[
+              assume ${A \in G/H};
+            ];
+          ]
+        )
+      });
+      +p {
+        雑導出木なので断りなく使っていたが、存在量化子からの演繹で現れる記号は存在量化子のかかる論理式を満たすような対象を指している。ここでは${g}を${g \in G \land A =gH}を満たす対象を指す記号として使っている。
+      }
+      +math (${
+        \proven!(
+          open DeriveDSL in
+          derive ${\forall A \in G/H \sqbracket{\exists g \sqbracket{
+            \app{\pi}{g} = A
+          }}}
+          |> by {\<${A}\>}
+          |> from[
+            derive ${A \in G/H \Rightarrow \exists g \sqbracket{\app{\pi}{g}=A}}
+            |> from[
+              derive ${\exists g \sqbracket{\app{\pi}{g} = A}}
+              |> from[
+                derive ${\app{\pi}{g} = A}
+                |> from[
+                  derive ${\app{\pi}{g} = gH}
+                  |> from[
+                    derive ${g \in G}
+                    |> from[
+                      assume ${g \in G \land A = gH};
+                    ];
+                  ];
+                  derive ${gH = A}
+                  |> from[
+                    assume ${g \in G \land A = gH};
+                  ];
+                ];
+              ];
+            ];
+          ]
+        )
+      });
+      +definition ?:(`def-normal`) ?:({正規部分群})<
+        +p{
+          群${G}の部分群${H}が、
+          ${\forall g \in G \forall h \in H \sqbracket{
+            g^{-1}hg \in H
+          }}を満たすとき、${H}を正規部分群といい、${G \triangleright H}とかく。
+        }
+      >
+      +p {
+        正規部分群の条件が${\forall g \in G \sqbracket{gH = Hg}}と同値であることは自明だが、このことから正規部分群とは、左右の剰余類が一致する部分群と言い換えることができる。
+      }
+      +definition ?:(`def-automorphism`) ?:({内部自己同型})<
+        +p{
+          群${G}から${G}への写像${\phi_g:G \rightarrow G \; h \mapsto g^{-1}hg}
+          は自明に同型であるが、これを${G}の内部自己同型という。
+        }
+      >
+      +p {
+        実は共役${g^{-1}Hg}は部分群${H}の内部自己同型による像であったことがわかる。
+      }
+      +proposition<
+        +p {
+          群${G}の元${g}による部分群${H}の共役${g^{-1}Hg}は${G}の部分群である。
+        }
+        +proof<
+          +prp{
+            群の定義から${g^{-1}Hg}が${G}の部分集合であることは自明。
+          }
+          +prp{
+            ${H}は単位元を含むため、${g^{-1}Hg}も単位元を含む。
+          }
+          +prp{
+            ${H}は部分群であるから${h^{-1}}は${H}の元であり、同様に${g^{-1}}も${G}の元であるから、${g^{-1}hg}の逆元${ghg^{-1}=\paren{g^{-1}}^{-1}hg^{-1}}も${g^{-1}Hg}の元である。
+          }
+          +prp{
+            ${g^{-1}Hg}の任意の元${g_1, g_2}について、それぞれ${g_1 = g^{-1}h_1g}、${g_2 = g^{-1}h_2g}となる${H}の元${h_1, h_2}が存在する。このとき、
+          }
+          +math (${
+            g_1g_2 = g^{-1}h_1gg^{-1}h_2g = g^{-1}h_1h_2g \in g^{-1}Hg
+          });
+          +prp{
+            よって、演算について閉じているため${g^{-1}Hg}は${G}の部分群。
+          }
+        >
+      >
+      +lemma<
+        +p{
+          群${G}の正規部分群${H}と部分群${G_1}の共通部分${H \cap G_1}は${G_1}の正規部分群である。
+        }
+        +proof<
+          +prp{
+            ${H \cap G_1}の元${x}について、${x \in H}であるから、${G_1 \subset G}より${\forall g \in G_1 \sqbracket{g^{-1}xg \in H}}。
+          }
+          +prp{
+            ${x \in G_1}でもあるから、${\forall g \in G_1 \sqbracket{g^{-1}xg \in G_1}}。
+          }
+          +prp{
+            よって、${\forall x \in H \cap G_1 \sqbracket{\forall g \in G_1 \sqbracket{g^{-1}xg \in H \cap G_1}}}。
+          }
+        >
+      >
+      +p {
+        これによって参考書問4.1は解かれた。
+      }
+      +problem?:(`problem-4.2`) ?:({参考書問4.2})<
+        +p{
+          群${G}が集合${X}に推移的に作用しているとき、${X}の任意の点${x,y}の固定群${G_x, G_y}は互いに共役となることを示せ(参考書問4.2)。
+        }
+        +p {
+          推移的に作用している、とは作用の対象となる集合${X}の任意の元${x}の軌道${Gx = \setsep{gx}{g\in G}}が${X}に一致することを指す。
+        }
+        +p {
+          ${G_x}が${x}の固定群であるというのは、${G_xx=\brace{x}}のことである。
+        }
+        +p {
+          ${x,y}を入れ替えるような${X}の変換に対応する${G}の要素を${a}とする。
+          すなわち、
+        }
+        +math (${\forall p \in X \sqbracket{
+            \paren{p \neq x \land p \neq y \Rightarrow ap = p} \land
+            \paren{p = x \Rightarrow ap = y} \land
+            \paren{p = y \Rightarrow ap = x}
+        }});
+        +p {
+          このとき、${a^{-1}G_xa = G_y}かつ${a^{-1}G_ya = G_x}となるから、${G_x}と${G_y}は${a}によって互いに共役。
+        }
+      >
+      
+    >
+    +subsection{第一同型定理(準同型定理)} <
+      +theorem ?:(`theorem-homomorphism`) ?:({第一同系定理(準同型定理)})<
+        +p {
+          群${G}から群${H}への写像${\phi:G \rightarrow H}が準同型であるとき、${\phi}の核は${G}の正規部分群である。つまり、
+        }
+        +math (${
+           G \triangleright \ker \phi
+        });
+        +p {
+          また、
+        }
+        +math (${
+          G/\ker \phi \cong \im \phi
+        });
+        +p {
+          さらに、${G}が有限群であるならば
+        }
+        +math (${
+          \abs{G}/\abs{\ker \phi} = \abs{\im \phi}
+        });
+      >
+      +proof<
+        +prp{
+          ${\ker \phi}の元${x}について、
+        }
+        +align[
+          [
+            ${\app{\phi}{g^{-1}xg}};
+            ${= \app{\phi}{g}^{-1}\app{\phi}{x}\app{\phi}{g}};
+            ${\phi\text!{は準同型}};
+          ];
+          [
+            ${};
+            ${= \app{\phi}{g}^{-1}e_H\app{\phi}{g}};
+            ${x\text!{は}\phi\text!{によって単位元に写る}};
+          ];
+          [
+            ${};
+            ${= \app{\phi}{g}^{-1}\app{\phi}{g}};
+          ];
+          [
+            ${};
+            ${= e_H};
+          ];
+        ];
+        +prp{
+          よって、${g^{-1}\ker \phi g = \ker \phi}。
+        }
+        +prp{
+          ここで、${\ker \phi}による任意の剰余類について、その任意の元の${\phi}の写す先は一致する。すなわち、
+        }
+        +math (${
+          \forall A \in G/\ker \phi \sqbracket{\forall x, y \in A \sqbracket{
+            \app{\phi}{x} = \app{\phi}{y}
+          }}
+        });
+        +prp{
+          これは、${A \in G/\ker \phi}は${g\ker \phi}より像は
+          ${\phi \brace{g\ker \phi} = \brace{\app{\phi}{g}}}となることから示すことができる。
+        }
+        +prp{
+          つまり、${\ker \phi}による剰余類においては${\phi}の写す先は一意である。
+          よって、${G/\ker \phi}の元からその代表元(なんでもよい)の${\phi}による行き先を対応付けると、これは写像(一意対応)となる。
+          \footnote{写像よりも緩いものに対応がある。これは多対多の結びつけを許すもので、集合論で言えば冪集合そのものである。グラフの辺もこれで表される。対応が写像である条件は、任意のfirst要素について、対応づけされているsecond要素が一意であることで、これを一意対応という。}
+        }
+        +prp{
+          そのような写像${\psi : G/\ker \phi \rightarrow \im \phi}は明らかに全射であり、${\phi}が準同型であることから、これも準同型である。
+        }
+        +prp{
+          任意の剰余類${A,B}について、${\app{\psi}{A} = \app{\psi}{B}}であるとする。${A = g_1\ker \phi, B = g_2\ker \phi}である${g_1, g_2}が存在するから、${\app{\phi}{g_1} = \app{\phi}{g_2}}。
+        }
+        +align[
+          [
+            ${\app{\phi}{g_1}};
+            ${= \app{\phi}{g_2}};
+          ];
+          [
+            ${\app{\phi}{g_2}^{-1}\app{\phi}{g_1}};
+            ${= e_H};
+          ];
+          [
+            ${\app{\phi}{g_2^{-1}g_1}};
+            ${= e_H};
+          ];
+        ];
+        +prp{
+          より${g_2^{-1}g_1 \in \ker \phi}であるから、${g_1 = g_2h}となる${h \in \ker \phi}が存在する。${h\ker \phi = \ker \phi}より、${g_1\ker \phi = g_2 \ker \phi}つまり、${A = B}。よって、${\psi}は単射である。
+        }
+        +prp{
+          以上より、${\psi:G/\ker \phi \rightarrow \im \phi}は全単射で準同型であるから、同型である。よって
+        }
+        +math (${
+          G/\ker \phi \cong \im \phi
+        });
+        +prp{
+          ${G}が有限群であるとき、全単射の存在から${\abs{G/\ker \phi} = \abs{\im \phi}}。
+        }
+        +prp{
+          Lagrangeの定理(定理\ref(`theorem-lagrange`);)より、
+          ${\abs{G/\ker \phi} = \abs{G}/\abs{\ker \phi}}であるから
+        }
+        +math (${
+          \abs{G}/\abs{\ker \phi} = \abs{\im \phi}
+        });
+        +prp{
+
+        }
+      >
+      +p {
+        この準同型定理は群論に限らず普遍的に代数系でなりたつものである。
+        
+      }
+      +p {
+        例えば線形代数でいえば次元定理は${\abs{G}/\abs{\ker \phi} = \abs{\im \phi}}にあたる。
+        普遍性を俯瞰したい場合は圏論をすることになる。
+      }
+      +example<
+        +p {
+          交代群は対称群の正規部分群である。
+        }
+        +p {
+          置換の符号${\sgn}の核がちょうど交代群となることから自明。
+        }
+      >
+      +example<
+        +p {
+          特殊線形群${\app{SL}{n, \mathbb{R}}}は一般線形群${\app{GL}{n, \mathbb{R}}}の正規部分群である。
+        }
+        +p {
+          行列式の核が特殊線形群となっている。
+        }
+      >
+      +proposition<
+        +p {
+          指数が${2}の部分群は正規部分群である。
+        }
+        +proof<
+          +prp{
+            群を${G}、部分群を${H}とする。
+            ${g \notin H}とすると、${G}は${H}と${gH}に分割されるから、
+            ${gH = Hg}となる。よって、${H}は${G}の正規部分群。
+          }
+        >
+      >
+      +problem?:(`problem-4.3-1,3`) ?:({参考書問4.3(1),(3)})<
+        +p {
+          群${G}と${H}とその間の写像${\phi : G \rightarrow H}について、${H_1}が${H}の正規部分群であるとき、逆像${\phi^{-1}\brace{H_1}}は${G}の部分群であるか、正規部分群であるか。もしそうであれば証明を、そうでなければ反例を与えよ。
+        }
+        +p {
+          ${G}の任意の元${g}について、
+        }
+        +align[
+          [
+            ${\phi\brace{g^{-1} \phi^{-1}\brace{H_1} g}};
+            ${= \app{\phi}{g}^{-1} \phi\brace{\phi^{-1}\brace{H_1}} \app{\phi}{g}};
+            ${\phi\text!{は準同型写像}};
+          ];
+          [
+            ${};
+            ${= \app{\phi}{g}^{-1} H_1 \app{\phi}{g}};
+          ];
+          [
+            ${};
+            ${= H_1};
+            ${H_1\text!{は正規部分群}};
+          ];
+        ];
+        +p{
+          より、${g^{-1} \phi^{-1}\brace{H_1} g = \phi^{-1}\brace{H_1}}が成り立つ。
+        }
+        +p {
+          よって、${\phi^{-1}\brace{H_1}}は${G}の正規部分群であり、当然部分群でもある。
+        }
+      >
+      +problem?:(`problem-4.3-2,4`) ?:({参考書問4.3(2),(4)})<
+        +p {
+          群${G}と${H}とその間の写像${\phi : G \rightarrow H}について、${G_1}が${G}の正規部分群であるとき、像${\phi\brace{G_1}}は${H}の部分群であるか、正規部分群であるか。もしそうであれば証明を、そうでなければ反例を与えよ。
+        }
+        +p {
+          ${G_1}は群であり、${\phi}は準同型であるから、${\phi \brace{G_1}}は単位元を持ち、演算について閉じていて、すべての元が逆元を持つ。よって、部分群である。
+        }
+        +p {
+          しかし、${\phi}が全射ではないとき、${\forall x \in G \sqbracket{h \neq \app{\phi}{x}}}となる${h}がある。
+          この${h}について、準同型からの${G_1}の性質を引き継ぐことができないため${h^{-1} \phi \brace{G_1} h}が${\phi \brace{G_1}}にならないことがありうる。
+        }
+        +p {
+          実際、${G = S_3}、${H = S_4}、${G_1 = A_3}とし、${\phi}を包含写像(要素自体はそのまんま)とすると、${\phi}は準同型であるが、${A_3}は${S_4}の正規部分群ではない。
+        }
+      >
+      +problem?:(`problem-4.4`) ?:({参考書問4.4})<
+        +p {
+          群${G}の正規部分群${H_1, H_2}について、${H_1 \cap H_2 = \brace{e}}であるとき、${H_1}の元と${H_2}の元は可換となることを示せ。
+        }
+        +p {
+          ${H_1}の元${x}と${H_2}の元${y}について、${x^{-1} \in H_1}であるから${yx^{-1}y^{-1}\in H_1}が成り立つ。よって、${xyx^{-1}y^{-1}\in H_1}。
+        }
+        +p {
+          また、${y^{-1} \in H_2}かつ${x^{-1}yx\in H_2}より、${xyx^{-1}y^{-1}\in H_2}。
+        }
+        +p {
+          以上より、${xyx^{-1}y^{-1} \in H_1 \cap H_2}だが、${H_1 \cap H_2 = \brace{e}}より、${xyx^{-1}y^{-1} = e}だから、
+        }
+        +align[
+          [
+            ${e};
+            ${= xyx^{-1}y^{-1}};
+          ];
+          [
+            ${eyx};
+            ${= xyx^{-1}y^{-1}yx};
+          ];
+          [
+            ${yx};
+            ${= xy};
+          ];
+        ];
+        +p {
+          よって、${H_1}の元と${H_2}の元は可換。
+        }
+      >
+    >
+    +subsection{第二同型定理} <
+      +theorem ?:(`thoerem-2isomorphism`) ?:({第二同型定理})<
+        +p {
+          群${G}の部分群${S}と正規部分群${N}について、
+        }
+        +align[
+          [
+            ${\text!{(1)}};
+            ${\text!{${SN}は${G}の部分群である}};
+          ];
+          [
+            ${\text!{(2)}};
+            ${S \triangleright S \cap N};
+          ];
+          [
+            ${\text!{(3)}};
+            ${\paren{SN}/N \cong S/\paren{S \cap N}};
+          ];
+        ];
+        +proof<
+          +prp{
+            ${S}も${N}も単位元を含むため、${ee=e}より${e\in SN}。
+            また、${s_1, s_2 \in S}と${n_1, n_2 \in N}について
+          }
+          +align[
+            [
+              ${s_1n_1s_2n_2};
+              ${= s_1n_1s_2s_2^{-1}n'_2s_2};
+              ${\text!{${N}は正規部分群であるからこのような${n'_2 \in N}が存在する}};
+            ];
+            [
+              ${\paren{s_1n_1}\paren{s_2n_2}};
+              ${= s_1n_1n'_2s_2};
+              ${};
+            ];
+            [
+              ${\paren{s_1n_1}\paren{s_2n_2}};
+              ${= s_1s_2n's_2^{-1}s_2};
+              ${\text!{${N}は正規部分群であるからこのような${n'\in N}が存在する}};
+            ];
+            [
+              ${\paren{s_1n_1}\paren{s_2n_2}};
+              ${= s_1s_2n'};
+              ${};
+            ];
+          ];
+          +prp{
+            より${SN}において積は閉じている。また、
+            ${s \in S}と${n\in N}について、
+          }
+          +align[
+            [
+              ${\paren{sn}^{-1}};
+              ${= n^{-1}s^{-1}};
+            ];
+            [
+              ${\paren{sn}^{-1}};
+              ${= s^{-1}n'ss^{-1}};
+            ];
+            [
+              ${\paren{sn}^{-1}};
+              ${= s^{-1}n'};
+            ];
+          ];
+          +prp{
+            よって、${SN}は逆元を含む。
+          }
+          +prp{
+            以上より、${SN}は${G}の部分群である。
+          }
+          +prp{
+            (2)は正規部分群の章の初めの部分で述べた。
+          }
+          +prp{
+            写像${\phi:S \rightarrow \paren{SN}/N}を
+            ${\app{\phi}{e} = N}と
+            ${\app{\phi}{s} = sN}を満たすように定める。${\paren{SN}/N}は${sN}で尽くされるから分出公理からこのような写像は一般的な集合論の公理系のもとで存在する。
+          }
+          +prp{
+            定義から明らかに${\phi}は準同型である。また、${\ker \phi = S \cap N}であるから第一同型定理より${\paren{SN}/N \cong S/\paren{S \cap N}}が成り立つ。
+          }
+        >
+      >
+      +p {
+        一般射影線形群と特殊射影線形群が同型であることがすぐ示せる(英語wikipediaから引いてきた情報で、確認してません)。
+      }
+      +math (${
+        \app{PGL}{2, \mathbb{C}}
+        := \app{GL}{2, \mathbb{C}}/\paren{\mathbb{C}^{\times}I}
+        \cong \app{SL}{2, \mathbb{C}}/\brace{\pm I}
+        =: \app{PSL}{2, \mathbb{C}}
+      });
+    >
+    +subsection{第三同型定理} <
+      +p {
+        群${G}と正規部分群${N}について、
+      }
+      +p {
+        (1) 任意の${G/N}の部分群${S}について、${S=K/N}を満たし、${N \subset K \subset G}を満たすような${G}の部分群${K}が存在する。
+      }
+      +p {
+        (2) 任意の${G/N}の正規部分群${S}について、${S=K/N}を満たし、${N \subset K \subset G}を満たすような${G}の正規部分群${K}が存在する。
+      }
+      +p {
+        (3) ${N \subset K \subset G}を満たすような${G}の正規部分群${K}について、
+        ${\paren{G/N}/\paren{K/N} \cong G/K}が成り立つ。
+      }
+      +proof<
+        +prp{
+          雑証明をする。
+        }
+        +prp{
+          (1),(2) ${K = G - \bigcup\paren{G/N - S}}とすればよい。
+        }
+        +prp{
+          (3) 写像${\phi : G/N \rightarrow G/K}を考えれば第一同型定理から示すことができる。
+        }
+      >
+    >
+    +subsection{第四同型定理} <
+      +p {
+        対応定理(correspondence theorem)とか束定理(lattice theorem)とか言うらしい。
+        重いので今回はパス。
+      }
+    >
+    +subsection{指標} <
+      +definition ?:(`def-character`) ?:({指標})<
+        +p {
+          有限群${G}から非零複素数の成す乗法群${\mathbb{C}^{\times}}への準同型${\chi}を群${G}の指標という。
+        }
+      >
+      +problem ?:(`problem-4.5-1`) ?:({参考書問4.5(1)})<
+        +p {
+          ${\chi}の像は絶対値が${1}の複素数となることを示せ。
+        }
+        +p {
+          有限群の任意の元は位数が有限値であるから、${\forall x \in G \sqbracket{\exists n \sqbracket{\app{\chi}{x}^{n} = 1}}}となる。
+        }
+        +p {
+          ${1}の${n}乗根の絶対値は${1}であるから${\chi}の像は絶対値が${1}の複素数となる。
+        }
+      >
+      +definition ?:(`def-monocharacter`) ?:({単位指標})<
+        +p {
+          像が${\brace{1}}である指標を単位指標といい、${1}とかく。
+        }
+      >
+      +problem ?:(`problem-4.5-1`) ?:({参考書問4.5(2)})<
+        +p {
+          ${\sum_{g \in G}\app{\chi}{g}}が${\chi=1}のとき${\abs{G}}、そうでなければ${0}となることを示せ。
+        }
+        +p {
+          ${G}の任意の元${h}について、${hG = G}。
+          よって、${\chi \brace{G} = \chi \brace{hG}}であるから、
+        }
+        +align[
+          [
+            ${\sum_{g \in G}\app{\chi}{g}};
+            ${= \sum_{g \in G}\app{\chi}{hg}};
+          ];
+          [
+            ${\sum_{g \in G}\app{\chi}{g}};
+            ${= \sum_{g \in G}\app{\chi}{h}\app{\chi}{g}};
+          ];
+          [
+            ${\sum_{g \in G}\app{\chi}{g}};
+            ${= \app{\chi}{h}\paren{\sum_{g \in G}\app{\chi}{g}}};
+          ];
+        ];
+        +p {
+          上式が恒等的に成り立つため、${\chi \neq 1}ならば${\sum_{g \in G}\app{\chi}{g}=0}である。
+        }
+        +p {
+          一方、${\chi = 1}の場合は自明。
+        }
+      >
+      +p {
+        指標は表現論でたくさんでてくるっぽいので物理やるひとはこれから(もしくはすでに)出会うことになると思う。この自主ゼミでもあとで扱ってもいいかもしれない。
+      }
+    >
+  >
+  +section{射影幾何について}<
+    +subsection{ことわり} <
+      +p {
+        持ってる本に射影幾何のことが少し書いてあったので載せときます。
+        J.H.シルヴァーマン/J.テイト 著、足立恒雄/木田雅成/小松啓一/田谷久雄　訳
+        「楕円曲線論入門」ISBN978-4-621-06453-5
+      }
+      +p {
+        自分なりに噛み砕いたりしましたが、ほとんどの内容が被り、写しに近い状態です。
+      }
+    >
+    +subsection{Fermat方程式との関連} <
+      +p {
+        Fermat方程式1
+      }
+      +math (${
+        x^N + y^N = 1
+      });
+      +p {
+        の有理数解を求める問題がある。
+      }
+      +p {
+        試しに有理数解を${\paren{a/c,b/d}}とする。ただし、どちらも既約分数で、分母が正であるとする。すると、
+      }
+      +math (${
+        a^Nd^N + b^Nc^N = c^Nd^N
+      });
+      +p {
+        より、${a^Nd^N}は${c}で割り切れることがわかる。しかし、${a/c}は既約分数であることから、${d^N}が${c}で割り切れる。
+      }
+      +p {
+        同様にして${c^N}が${d}で割り切れることがわかるので、分母が正であることから${c=d}。よって以下を得る。
+      }
+      +math (${
+        a^N+b^N=c^N
+      });
+      +p {
+        これにより${a,b,c}がFermat方程式2
+      }
+      +math (${
+        X^N+Y^N=Z^N
+      });
+      +p {
+        の整数解を与えることがわかる。
+        しかし、逆については、異なる整数解が同じFermat方程式1の有理数解を与えることもあれば、そもそもあるFermat方程式2の整数解はFermat方程式1の有理数解を導かない。
+      }
+      +p {
+        前者については、異なる2つの整数解が${(a,b,c)}と${(ta,tb,tc)}である場合に起きることであり、後者は${N}が奇数のときの整数解${(-1, 1, 0)}が${(\infty, \infty)}を導くことからわかる。
+      }
+      +p {
+        これらは同次座標と無限遠点に関連している。
+      }
+    >
+    +subsection{同次座標と射影平面} <
+      +p {
+        さて、上記のような要請から代数的に射影平面を定義することができる。
+      }
+      +definition ?:(`def-projectiveplane-alg`) ?:({代数的射影平面})<
+        +p {
+          射影平面${\mathbb{P}^2}を、数の集合${Z}と同値関係
+          ${(a,b,c) \sim (a',b',c') \Leftrightarrow 
+          \exists t \neq 0 \sqbracket{a=ta' \land b=tb' \land c=tc'}}
+          　　を用いて次のように定義する。
+        }
+        +math (${
+          \mathbb{P}^2 := \setsep{(a,b,c) \in Z^3}{(a,b,c) \neq \zerovec}/\sim
+        });
+      >
+      +p {
+        ${t}倍して一致する点を同じとみなすわけである。このとき、点${(a,b,c)}について${a,b,c}を同次座標という。
+      }
+      +p {
+        平面に限らず、射影空間を定義できる。
+      }
+      +definition ?:(`def-projectivespace-alg`) ?:({代数的射影空間})<
+        +p {
+          射影空間${\mathbb{P}^n}を、数の集合${Z}と同値関係
+          ${\bm{p} \sim \bm{p'} \Leftrightarrow 
+          \exists t \neq 0 \sqbracket{\bm{p} = t\bm{p'}}}
+          を用いて次のように定義する。
+        }
+        +math (${
+          \mathbb{P}^n := \setsep{\bm{a} \in Z^n}{\bm{a} \neq \zerovec}/\sim
+        });
+      >
+      +p {
+        このとき、${\mathbb{P}^2}における直線とは、定数${\alpha, \beta, \gamma}に対して${\alpha a+\beta b+\gamma c = 0}を満たす点の集合をいう。
+      }
+      +p {
+        幾何学的には、平面上の2点が与えられれば直線がただ1つに決まる。同じように、平行しない2直線はただ1つの点を共有する。しかし、平行でないという条件ははずしたほうが便利である。こういった動機から、すべての直線が通る特別な点をつけたすことにする。
+      }
+      +p {
+        この特別な点はただ1つでいいだろうか？
+        ためしに平行する2直線${L_1, L_2}が点${P}を通るとしよう。
+        また、平行する2直線${L'_1, L'_2}が点${P'}を通ることにして、さらに${L_1}とは平行でないとする。
+      }
+      +p {
+        このとき、${L_1}と${L'_1}は交点${Q = L_1 \cap L'_1}を共有する。しかし、2つの直線はただ1つの交点をもつはずだから${P \in L_1}と${P' \in L'_1}は異なる。
+      }
+      +p {
+        よって、特別な点は1つではすまないどころか、直線の方向の分だけ追加しなければならない。
+      }
+      +p {
+        こういった幾何学的動機から射影平面を定義すると、以下のようになる。
+      }
+      +definition ?:(`def-euclidplane-geo`) ?:({Euclid平面})<
+        +p {
+          通常のEuclid平面を次のように定義する。
+        }
+        +math (${
+          \mathbb{A}^2 = \setsep{(x,y)}{x,y\text!{は数}}
+        });
+      >
+      +definition ?:(`def-projectiveplane-geo`) ?:({幾何的射影平面})<
+        +p {
+          射影平面を次のように定義する。
+        }
+        +math (${
+          \mathbb{P}^2 = \mathbb{A}^2 \cup \brace{\mathbb{A}^2\text!{
+            における方向の集合
+          }}
+        });
+      >
+      +p {
+        方向とは、直線がもつもので、2つの直線が平行なとき同じ方向をもつという。つまり、これは平行線の同値類ともいえる。このとき、${\mathbb{P}^2 - \mathbb{A}^2}が無限遠点の集合となる。
+      }
+      +p {
+        こうしてついに、任意の2点を通る直線はただ1つに定まり、任意の2直線はただ1つの交点をもつことになり、平行線とそうでない2直線を特に区別する必要がなくなる。というより、${\mathbb{P}^2}には平行線は存在しない。
+        任意の2点を通る直線はただ1つに定まり、任意の2直線はただ1つの交点をもつことになるということを考えると、実は無限遠点の集合${L_{\infty}}も直線であることがわかる。
+      }
+      +p {
+        さて、幾何的な射影平面と代数的な射影平面は同じと言っていいものなのだろうか？
+        　それを検証するためには方向の集合とはなにか？ということを解析的に考える必要がある。
+      }
+      +p {
+        方向を考えるとき、これを原点を通る直線として考えることができる。なぜなら、任意の直線は原点を通る唯一の直線と平行(同じ方向をもつ)からである。原点を通る直線は、ともに${0}になることがない数${A, B}を用いて
+      }
+      +math (${
+        Ay = Bx
+      });
+      +p {
+        と表せる。この式を用いて方向を数の対で表すと、${(A, B)}と${(A', B')}が同じ方向を表す必要十分条件は
+        ${\exists t \neq 0 \sqbracket{(A', B') = (tA, tB)}}で与えられる。
+      }
+      +p {
+        同じ方向を表すものは同じとみなすから、この条件を同値関係とした同値類が方向の集合となる。つまり、この方向の集合は射影直線上の点の集合${\mathbb{P}}である。
+      }
+      +p {
+        となると、射影平面${\mathbb{P}^2}は
+      }
+      +math (${
+        \mathbb{P}^2 = \mathbb{A}^2 \cup \mathbb{P}
+      });
+      +p {
+        で表されることになるが、これは代数的定義とどう対応するのだろうか。
+      }
+      +p {
+        写像${p : \mathbb{P}^2 \rightarrow \mathbb{A}^2 \cup \mathbb{P}}を以下のように定める
+      }
+      +align[
+        [
+          ${\sqbracket{a, b, c} \blank};
+          ${\longmapsto \blank \paren{\frac{a}{c}, \frac{b}{c}} \in \mathbb{A} (c \neq 0)};
+        ];
+        [
+          ${\sqbracket{a, b, 0} \blank};
+          ${\longmapsto \blank \sqbracket{a, b} \in \mathbb{P}};
+        ];
+        [
+          ${\sqbracket{x, y, 1} \blank};
+          ${\longmapsfrom \blank (x,y) \in \mathbb{A}^2};
+        ];
+        [
+          ${\sqbracket{A, B, 0} \blank};
+          ${\longmapsfrom \blank \sqbracket{A,B} \in \mathbb{P}};
+        ];
+      ];
+      +p {
+        このとき、写像${p}は自明に全単射である。
+      }
+      +p {
+        たとえば、${c \neq 0}ならば
+      }
+      +math (${
+
+        \map{\sqbracket{a, b, c}}{\paren{\frac{a}{c}, \frac{b}{c}}}
+        \blank \longmapsto \blank \sqbracket{\frac{a}{c}, \frac{b}{c}, 1}
+        = \sqbracket{a, b, c}
+      });
+      +p {
+        ${c = 0}ならば
+      }
+      +math (${
+        \map{\sqbracket{a, b, 0}}{\sqbracket{a, b}}
+        \blank \longmapsto \blank \sqbracket{a, b, 0}
+      });
+      +p {
+        要素が一対一に対応することはわかったが、幾何的な構造を保持するのだろうか。
+        2つの射影平面での直線は同じものを指すのだろうか。
+      }
+      +p {
+        例として、式
+      }
+      +math (${
+        \alpha X + \beta Y + \gamma Z = 0
+      });
+      +p {
+        を満たす点の集合である直線${L}を考える。
+      }
+      +p {
+        ${\alpha, \beta}はともに0であるとはないとする。
+        ${L}内の点${\sqbracket{a, b, c}}は${c \neq 0}のとき${p}によって
+        直線${\alpha x + \beta y + \gamma = 0}上の点
+        ${\paren{\frac{a}{c}, \frac{b}{c}} \in \mathbb{A}^2}に送られる。
+        ${c=0}のときは${\sqbracket{a, b} \in \mathbb{P}}に送られるが、
+        これは${\alpha a + \beta b = 0}を満たし、直線${\alpha x + \beta y + \gamma = 0}と平行(同じ方向をもつ)となっている。
+      }
+      +p {
+        ${\alpha, \beta}がともに0である場合、直線上の点${\sqbracket{a, b, c}}は${c = 0}となるからすべて${\sqbracket{a, b} \in \mathbb{P}}に送られ、像が${\mathbb{P}}となるから送られた先では無限遠点からなる直線${L_{\infty}}となる。
+      }
+      +p {
+        このように、代数的な定義も幾何的な定義も矛盾なく同一視できる。
+      }
+    >
+    +subsection{射影平面上の曲線} <
+      +definition ?:(`def-algcurve`) ?:({代数曲線})<
+        +p {
+          アフィン平面${\mathbb{A}^2}内において、方程式
+        }
+        +math (${
+          \app{f}{x, y} = 0
+        });
+        +p {
+          で表される曲線を代数曲線という。
+        }
+      >
+      +p {
+        しかし、射影平面${\mathbb{P}^2}で曲線を定義しようとすると、同時座標は変数が3つあるから3変数の式を立てなくていけなくなる。さらに、同次座標は同じとみなさなければならない。そこで、
+      }
+      +math (${
+        \forall t \sqbracket{
+          \app{F}{a, b, c} = 0 \Rightarrow \app{F}{ta, tb, tc} = 0
+        }
+      });
+      +p {
+        となる${\app{F}{a, b, c}}に注目すると、これは同次多項式となる。つまり、
+      }
+      +math (${
+        \app{F}{ta, tb, tc} = t^d\app{F}{a, b, c}
+      });
+      +p {
+        もしくは、${F}は次数が${d}の項の一次結合で表される(これらは同値)。
+      }
+      +p {
+        このような方程式で表される解の集合を${\mathbb{P}^2}における曲線${C}と定義する。
+      }
+      +math (${
+        C : \app{F}{X, Y, Z} = 0
+      });
+      +p {
+        この曲線を幾何的に見てみよう。
+      }
+      +p {
+        ${\app{F}{a,b,c}}は同次式だから
+      }
+      +math (${
+        \frac{1}{c^d}\app{F}{\frac{a}{c}, \frac{b}{c}, 1}
+        = \app{F}{a, b, c}
+        = 0
+      });
+      +p {
+        ここで、${\app{f}{x, y} := \app{F}{\frac{a}{c}, \frac{b}{c}, 1}}と定義すると以下のように曲線${C : \app{F}{a, b, c}}上の点を${\mathbb{A}^2 \cup \mathbb{P}}に対応させることを考える。${c \neq 0}とすると、
+      }
+      +align[
+        [
+          ${\setsep{\sqbracket{a, b, c} \in C}{c \neq 0}};
+          ${\blank \longrightarrow \blank \setsep{(x, y) \in \mathbb{A}^2}{\app{f}{x, y} = 0}};
+        ];
+        [
+          ${\sqbracket{a, b, c}};
+          ${\blank \longmapsto \blank \paren{\frac{a}{c}, \frac{b}{c}}};
+        ];
+      ];
+      +p {
+        この写像が全単射であることはすぐに確かめられる。この${\mathbb{A}^2}の曲線${\app{f}{x, y} = 0}を射影曲線${C}のアフィン部分という。
+      }
+      +p {
+        ${c = 0}の点は無限遠点、つまり方向に写される。実際、この方向は曲線上で無限遠に極限をとったときの接戦の傾きに一致する。
+      }
+      +p {
+        射影幾何の勉強化ではないのでこのくらいにしておきます。
+      }
+    >
+    +subsection{射影幾何の資料} <
+      +p{
+        時間がなくて紹介したり読み切ったりできなかったんですが、面白そうです。
+        ということでリンクだけ丸投げします。
+      }
+      +p {
+        \href(`http://www.math.aoyama.ac.jp/~kyo/Slides/handout_GakumonNyumonKouza_2011.pdf`){学問入門講座 射影の幾何学 西山享}
+      }
+      +p {
+        \href(`https://www.kurims.kyoto-u.ac.jp/~kenkyubu/kokai-koza/H30-mukai.pdf`){代数幾何の源流を求めて 向井茂}
+      }
+      +p {
+        \href(`http://echo-lab.ddo.jp/Libraries/佛教大学/仏教学部論集/95号(20110301)/佛教大学仏教学部論集 95号(20110301) 001田山令史「射影幾何学とカント空間」.pdf`){射影幾何学とカント空間 田山令史}
+      }
+      +p {
+        \href(`http://www.math.sci.hokudai.ac.jp/~yoshinaga/articles/fibonacci.pdf`){フィボナッチと射影幾何 吉永正彦}
+      }
+      +p {
+        \href(`https://www.asj.or.jp/geppou/archive_open/old_1993_2002/1999/pdf/19991002.pdf`){2体問題の解析的解法を264年ぶりに発見してレファレンスのない論文を書いた! 佐藤勲}
+      }
+      +p {
+        \href(`https://www.kaijo.ed.jp/wp-content/uploads/2016/02/2013summer-4.pdf`){2013年度数学科リレー講座４日目 ～非ユークリッド幾何学の例2～ ～射影幾何学～  原 崇泰・平山 裕之}
+      }
+      +p {
+        \href(`https://core.ac.uk/download/pdf/144253984.pdf`){修士論文 
+        射影平面における円錐曲線の性質について 高校数学における古典的教材の視点から 金濱千明}
+      }
+      +p {
+        \href(`http://aozoragakuen.sakura.ne.jp/PDF/pascal.pdf`){幾何学の精神 青空学園数学科}
+      }
+      +p {
+        \href(`https://www.ms.u-tokyo.ac.jp/video/open/2019highschool-math/op2019-003.pdf`){高校生のための現代数学講座 「いろいろな幾何学」講義(3)
+        坂井 秀隆　「作図と演算」}
+      }
+    >
+  >
+>
